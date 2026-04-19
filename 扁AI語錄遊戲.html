@@ -7,18 +7,24 @@
 <meta name="description" content="30 秒限時拳擊小遊戲，打爆滿口 AI 會取代你的語錄神棍。">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif}
-#game{background:#FFF5D6;border:4px solid #3D1F08;border-radius:14px;width:500px;min-height:580px;overflow:hidden;cursor:crosshair;position:relative;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%}
+body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif;overflow:hidden}
+#game{background:#FFF5D6;width:100vw;height:100vh;min-height:100vh;overflow:hidden;cursor:crosshair;position:relative;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
 #hud{display:none;justify-content:space-between;align-items:center;padding:10px 18px;background:#3D1F08;color:#FAC775;font-size:13px;font-weight:700;flex-shrink:0}
+#hud-right{display:flex;align-items:center;gap:12px}
 #td{font-size:22px;font-weight:900;color:#FAC775;font-variant-numeric:tabular-nums;min-width:36px;text-align:center;transition:color .2s}
 #td.urg{color:#E24B4A;animation:tpulse .45s infinite alternate}
 @keyframes tpulse{from{opacity:1}to{opacity:.5}}
 #tbw{height:5px;background:#7A3E10;display:none;flex-shrink:0}
 #tb{height:5px;background:#FAC775;width:100%;transition:width .1s linear}
+.lang-switch{position:absolute;top:14px;right:16px;z-index:40;padding:6px 10px;background:#FAC775;color:#3D1F08;border:2px solid #3D1F08;border-radius:999px;font-size:11px;font-weight:800;text-decoration:none;line-height:1}
+.lang-switch:hover{background:#fff}
+#stopbtn{display:none;padding:6px 10px;background:#FAC775;color:#3D1F08;border:2px solid #BA7517;border-radius:999px;font-size:11px;font-weight:900;cursor:pointer;line-height:1}
+#stopbtn:hover{background:#fff}
 
 /* Arena */
 #arena{flex:1;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 16px 0;position:relative;min-height:320px;overflow:hidden}
-#bub{background:#fff;border:3px solid #3D1F08;border-radius:16px;padding:12px 18px;width:100%;text-align:center;position:relative;margin-bottom:22px;transition:opacity .2s,transform .2s;min-height:70px}
+#bub{background:#fff;border:3px solid #3D1F08;border-radius:16px;padding:12px 18px;width:min(100%,960px);text-align:center;position:relative;margin-bottom:22px;transition:opacity .2s,transform .2s;min-height:70px}
 #bub.hide{opacity:0;transform:translateY(-8px);pointer-events:none}
 #bub::after{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);border:11px solid transparent;border-top:20px solid #3D1F08}
 #bub::before{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top:16px solid #fff;z-index:1}
@@ -30,7 +36,7 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 #nname{font-size:11px;color:#633806;font-weight:700;background:#FAC775;border:2px solid #BA7517;border-radius:4px;padding:2px 10px;margin-bottom:6px;text-align:center}
 
 /* NPC wrapper — fixed height so gloves know where to aim */
-#npcw{position:relative;width:120px;height:160px;display:flex;align-items:flex-end;justify-content:center}
+#npcw{position:relative;width:140px;height:190px;display:flex;align-items:flex-end;justify-content:center}
 #npc{display:flex;flex-direction:column;align-items:center;transform-origin:50% 100%}
 #npc.shk{animation:shk .35s}
 #npc.ko{animation:nko .6s ease-in forwards}
@@ -65,7 +71,7 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 @keyframes koban{0%{transform:translate(-50%,-50%) scale(0) rotate(-12deg)}35%{transform:translate(-50%,-50%) scale(1.3) rotate(6deg)}60%{transform:translate(-50%,-50%) scale(1) rotate(-1deg)}82%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1) translateY(-15px);opacity:0}}
 
 /* Punch word */
-#pw{position:absolute;font-size:48px;font-weight:900;color:#E24B4A;-webkit-text-stroke:3px #3D1F08;display:none;pointer-events:none;z-index:10;font-family:Impact,'Arial Black',sans-serif;letter-spacing:-2px}
+#pw{position:absolute;font-size:30px;font-weight:900;color:#E24B4A;-webkit-text-stroke:2px #3D1F08;display:none;pointer-events:none;z-index:10;font-family:Impact,'Arial Black',sans-serif;letter-spacing:-1px;max-width:150px;text-align:center;line-height:.95}
 #pw.pop{display:block;animation:ppop .65s ease-out forwards}
 @keyframes ppop{0%{opacity:1;transform:scale(.4) rotate(-14deg)}50%{opacity:1;transform:scale(1.3) rotate(6deg)}100%{opacity:0;transform:scale(1.05) rotate(-4deg) translateY(-28px)}}
 
@@ -76,11 +82,11 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 #fl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;border-radius:10px;z-index:8;transition:opacity .13s}
 
 /* New challenger banner */
-.nc-banner{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:800;color:#D85A30;-webkit-text-stroke:1px #3D1F08;z-index:11;pointer-events:none;white-space:nowrap;animation:ncb .8s ease-out forwards}
-@keyframes ncb{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.95) translateY(-18px)}}
+.nc-banner{position:absolute;top:130px;right:18px;font-size:13px;font-weight:900;color:#D85A30;background:#FAC775;border:2px solid #3D1F08;border-radius:999px;padding:6px 12px;box-shadow:0 5px 0 rgba(61,31,8,.18);z-index:11;pointer-events:none;white-space:nowrap;animation:ncb .8s ease-out forwards}
+@keyframes ncb{0%{opacity:0;transform:translateX(18px) scale(.8)}35%{opacity:1;transform:translateX(0) scale(1.04)}70%{opacity:1;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(.96)}}
 
 /* Glove area — ABSOLUTE so we can position fists precisely */
-#garea{display:none;position:relative;height:130px;flex-shrink:0;pointer-events:none}
+#garea{display:none;position:relative;height:140px;flex-shrink:0;pointer-events:none}
 
 /* Each glove wrapper — will be translated via JS toward NPC */
 .gw{position:absolute;display:flex;flex-direction:column;align-items:center;bottom:0;transition:transform .22s cubic-bezier(.4,0,.2,1)}
@@ -95,13 +101,23 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 .wst{width:50px;height:22px;background:#BA7517;border:3px solid #3D1F08;border-top:none;border-radius:0 0 6px 6px}
 
 /* Start Screen */
-#ss{position:absolute;inset:0;background:#FFF5D6;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:30;padding:26px}
+#intro,#ss{position:absolute;inset:0;background:#FFF5D6;border-radius:10px;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:30;padding:24px}
+#intro{display:flex}
+#ss{display:none}
+#ititle,#gtitle{font-size:46px;font-weight:900;color:#D85A30;-webkit-text-stroke:3px #3D1F08;font-family:Impact,sans-serif;letter-spacing:4px;text-align:center;line-height:.95}
 #gtitle{font-size:48px;font-weight:900;color:#D85A30;-webkit-text-stroke:3px #3D1F08;font-family:Impact,sans-serif;letter-spacing:5px;text-align:center}
-.s-sub{font-size:14px;color:#633806;text-align:center;line-height:1.75;max-width:300px;font-weight:500}
+.intro-badge{font-size:12px;font-weight:900;letter-spacing:1px;color:#FAC775;background:#3D1F08;border-radius:999px;padding:6px 12px}
+.i-sub,.s-sub{font-size:14px;color:#633806;text-align:center;line-height:1.75;max-width:360px;font-weight:500}
+.intro-grid{display:grid;grid-template-columns:1fr;gap:10px;width:100%;max-width:360px}
+.intro-card{background:#fff;border:3px solid #3D1F08;border-radius:14px;padding:12px 14px;text-align:left}
+.intro-head{font-size:12px;font-weight:900;color:#D85A30;margin-bottom:5px;letter-spacing:.5px}
+.intro-body{font-size:13px;color:#3D1F08;line-height:1.55}
 .rules{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .rule{font-size:12px;color:#888780;background:#fff;border:2px solid #BA7517;border-radius:6px;padding:4px 10px}
-#sbtn{padding:14px 40px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:10px;font-size:18px;font-weight:800;cursor:pointer;letter-spacing:1px}
-#sbtn:hover{background:#993C1D;transform:scale(1.03)}
+#ibtn,#sbtn,#sbtn-infinite{padding:14px 32px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:10px;font-size:18px;font-weight:800;cursor:pointer;letter-spacing:1px}
+#ibtn:hover,
+#sbtn:hover,
+#sbtn-infinite:hover{background:#993C1D;transform:scale(1.03)}
 
 /* End Screen */
 #es{display:none;position:absolute;inset:0;background:#FFF5D6;border-radius:10px;flex-direction:column;align-items:center;justify-content:center;gap:13px;z-index:30;padding:22px}
@@ -121,15 +137,81 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 .shbtn:hover{opacity:.85}
 #rbtn{padding:10px 28px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer}
 #rbtn:hover{background:#993C1D}
+.mode-select{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.modebtn.alt{background:#FAC775;color:#3D1F08}
+.modebtn.alt:hover{background:#FFE6A7}
+
+@media (min-width: 900px){
+  .lang-switch{top:20px;right:24px;font-size:13px;padding:8px 12px}
+  #hud{padding:18px 32px;font-size:22px}
+  #hud-right{gap:20px}
+  #td{font-size:48px;min-width:64px}
+  #stopbtn{font-size:13px;padding:8px 12px}
+  #arena{padding:28px clamp(42px,6vw,96px) 0}
+  #bub{width:min(100%,1180px);padding:22px 34px;min-height:122px;margin-bottom:34px}
+  #bub::after{bottom:-24px;border-width:13px;border-top-width:24px}
+  #bub::before{bottom:-17px;border-width:11px;border-top-width:19px}
+  #qt{font-size:28px}
+  #qs{font-size:17px;margin-top:8px}
+  #hpbar{gap:14px;margin-bottom:14px}
+  .hp{width:20px;height:20px}
+  #nname{font-size:17px;padding:5px 18px;margin-bottom:18px}
+  #npcw{width:300px;height:400px;margin-top:28px;transform:scale(1.9);transform-origin:50% 100%}
+  #garea{height:290px}
+  #gw-left{left:clamp(44px,8vw,140px)}
+  #gw-right{right:clamp(44px,8vw,140px)}
+  .gl{width:132px;height:108px}
+  .gl::before{width:40px;height:46px}
+  .left.gl::before,.right.gl::before{top:-36px}
+  .wst{width:84px;height:34px}
+  #pw{font-size:54px;max-width:260px}
+  .nc-banner{top:194px;right:clamp(22px,5vw,64px);font-size:20px;padding:10px 18px}
+  #intro,#ss,#es{padding:32px}
+  #ititle,#gtitle{font-size:74px}
+  .i-sub,.s-sub{max-width:680px;font-size:22px}
+  .intro-grid{max-width:880px;grid-template-columns:repeat(3,1fr);gap:16px}
+  .intro-head{font-size:16px}
+  .intro-body{font-size:18px}
+  .rule{font-size:16px;padding:8px 16px}
+  #ibtn,#sbtn,#sbtn-infinite,#rbtn{font-size:22px;padding:16px 28px}
+  .estats{gap:18px}
+  .sbox{min-width:140px;padding:16px 24px}
+  .snum{font-size:42px}
+  .slbl{font-size:15px}
+  .rating{font-size:22px;padding:10px 28px}
+  .sh-title{font-size:18px}
+  .shbtn{font-size:16px;padding:12px 18px}
+}
+
+@media (min-width: 1400px){
+  #arena{padding:34px clamp(64px,8vw,140px) 0}
+  #bub{width:min(100%,1320px);padding:24px 42px;min-height:138px}
+  #qt{font-size:32px}
+  #qs{font-size:18px}
+  #npcw{width:340px;height:450px;margin-top:34px;transform:scale(2.15)}
+  #garea{height:340px}
+  #gw-left{left:clamp(60px,10vw,180px)}
+  #gw-right{right:clamp(60px,10vw,180px)}
+  #pw{font-size:62px;max-width:300px}
+}
+
+@media (max-width: 768px){
+  body{overflow:auto}
+  #game{height:auto;min-height:100vh}
+}
 </style>
 </head>
 <body>
 <div id="game">
+  <a id="lang-switch" class="lang-switch" href="#"></a>
   <!-- HUD -->
   <div id="hud">
-    <div>KO <span id="kos" style="font-size:19px;color:#EF9F27">0</span></div>
+    <div><span id="hud-ko-label">KO</span> <span id="kos" style="font-size:19px;color:#EF9F27">0</span></div>
     <div id="td">30</div>
-    <div>分數 <span id="sc">0</span></div>
+    <div id="hud-right">
+      <div><span id="hud-score-label">分數</span> <span id="sc">0</span></div>
+      <button id="stopbtn" onclick="stopInfiniteGame(event)"></button>
+    </div>
   </div>
   <div id="tbw"><div id="tb"></div></div>
 
@@ -168,31 +250,56 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
     </div>
   </div>
 
+  <!-- Introduction -->
+  <div id="intro">
+    <div class="intro-badge" id="ibadge">ROUND 0</div>
+    <div id="ititle">先聽他們講完，再進場開扁</div>
+    <div class="i-sub" id="isub"></div>
+    <div class="intro-grid">
+      <div class="intro-card">
+        <div class="intro-head" id="ic1h"></div>
+        <div class="intro-body" id="ic1b"></div>
+      </div>
+      <div class="intro-card">
+        <div class="intro-head" id="ic2h"></div>
+        <div class="intro-body" id="ic2b"></div>
+      </div>
+      <div class="intro-card">
+        <div class="intro-head" id="ic3h"></div>
+        <div class="intro-body" id="ic3b"></div>
+      </div>
+    </div>
+    <button id="ibtn" onclick="showStartScreen()"></button>
+  </div>
+
   <!-- Start Screen -->
   <div id="ss">
     <div id="gtitle">扁 AI 語錄</div>
-    <div class="s-sub">有人說 AI 會取代你？<br>30 秒限時，打爆所有 AI 神棍！</div>
+    <div class="s-sub" id="ssub">有人說 AI 會取代你？<br>30 秒限時，打爆所有 AI 神棍！</div>
     <div class="rules">
-      <div class="rule">每人需 3 拳 KO</div>
-      <div class="rule">快速連擊加倍得分</div>
-      <div class="rule">KO 獎勵 +50 分</div>
+      <div class="rule" id="rule1">每人需 3 拳 KO</div>
+      <div class="rule" id="rule2">快速連擊加倍得分</div>
+      <div class="rule" id="rule3">KO 獎勵 +50 分</div>
     </div>
-    <button id="sbtn" onclick="startGame()">開始 30 秒挑戰！</button>
+    <div class="mode-select">
+      <button id="sbtn" onclick="startGame('timed')">開始 30 秒挑戰！</button>
+      <button id="sbtn-infinite" class="modebtn alt" onclick="startGame('infinite')"></button>
+    </div>
   </div>
 
   <!-- End Screen -->
   <div id="es">
-    <div class="et">時間到！</div>
+    <div class="et" id="etimeup">時間到！</div>
     <div class="estats">
-      <div class="sbox"><div class="snum" id="eko">0</div><div class="slbl">KO 人數</div></div>
-      <div class="sbox"><div class="snum" id="esc">0</div><div class="slbl">總得分</div></div>
-      <div class="sbox"><div class="snum" id="ecb">0</div><div class="slbl">最高連擊</div></div>
+      <div class="sbox"><div class="snum" id="eko">0</div><div class="slbl" id="eko-label">KO 人數</div></div>
+      <div class="sbox"><div class="snum" id="esc">0</div><div class="slbl" id="esc-label">總得分</div></div>
+      <div class="sbox"><div class="snum" id="ecb">0</div><div class="slbl" id="ecb-label">最高連擊</div></div>
     </div>
     <div class="rating" id="rating">評級中...</div>
-    <div class="sh-title">分享你的成績！</div>
+    <div class="sh-title" id="share-title">分享你的成績！</div>
     <div class="sh-btns">
-      <button class="shbtn tw" onclick="shareX()">𝕏 / Twitter</button>
-      <button class="shbtn ln" onclick="shareLine()">LINE</button>
+      <button class="shbtn tw" id="twbtn" onclick="shareX()">𝕏 / Twitter</button>
+      <button class="shbtn ln" id="lnbtn" onclick="shareLine()">LINE</button>
       <button class="shbtn cp" id="cpbtn" onclick="copyScore()">複製成績</button>
     </div>
     <button id="rbtn" onclick="resetGame(event)">再挑戰一次！</button>
@@ -200,6 +307,94 @@ body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;m
 </div>
 
 <script>
+const LANG = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'zh';
+const UI = {
+  zh: {
+    htmlLang: 'zh-TW',
+    title: '扁 AI 語錄 — 30秒限時拳擊挑戰',
+    description: '30 秒限時拳擊小遊戲，打爆滿口 AI 會取代你的語錄神棍。',
+    introBadge: 'ROUND 0',
+    introTitle: '先聽他們講完，再進場開扁',
+    introSub: '這不是辯論，是一場 30 秒的職涯保衛戰。把那些把 AI 神化、順便叫你轉行的語錄通通揍飛。',
+    introCard1Title: '你的任務',
+    introCard1Body: '30 秒內把所有散播「AI 會取代你」的神棍打到 K.O。',
+    introCard2Title: '怎麼出拳',
+    introCard2Body: '在擂台任一處點一下就會出拳，每個挑戰者要吃 3 拳才會倒下。',
+    introCard3Title: '怎麼得分',
+    introCard3Body: '連擊越快分數越高，每次 K.O. 還會額外得到 50 分。',
+    introBtn: '我準備好了',
+    startTitle: '扁 AI 語錄',
+    startSub: '有人說 AI 會取代你？<br>30 秒限時，打爆所有 AI 神棍！',
+    rule1: '每人需 3 拳 KO',
+    rule2: '快速連擊加倍得分',
+    rule3: 'KO 獎勵 +50 分',
+    startBtn: '開始 30 秒挑戰！',
+    hudKo: 'KO',
+    hudScore: '分數',
+    timeUp: '時間到！',
+    statKo: 'KO 人數',
+    statScore: '總得分',
+    statCombo: '最高連擊',
+    ratingPending: '評級中...',
+    shareTitle: '分享你的成績！',
+    shareX: '𝕏 / Twitter',
+    shareLine: 'LINE',
+    copy: '複製成績',
+    copied: '已複製！',
+    retry: '再挑戰一次！',
+    stopRun: '結束本局',
+    newChallenger: '新挑戰者出現！',
+    koBonus: 'K.O.! +50',
+    hashtags: '#扁AI語錄 #AI不會取代你',
+    langSwitch: 'English',
+    punchWords: ['POW!','BAM!','WHAM!','KAPOW!','ZAP!','SMASH!','打到了！','給你！'],
+    infiniteBtn: '無限模式',
+    endlessTimer: '∞',
+  },
+  en: {
+    htmlLang: 'en',
+    title: 'Punch AI Quotes — 30-Second Beatdown',
+    description: 'A 30-second arcade game where you punch smug AI replacement hot takes.',
+    introBadge: 'ROUND 0',
+    introTitle: 'Hear the nonsense, then enter the ring',
+    introSub: 'This is not a debate. It is a 30-second defense of your craft against every loudmouth yelling that AI will replace you.',
+    introCard1Title: 'Your Mission',
+    introCard1Body: 'Knock out as many AI doom-posting hot-take merchants as you can in 30 seconds.',
+    introCard2Title: 'How To Punch',
+    introCard2Body: 'Click anywhere in the arena to throw a punch. Every challenger takes 3 hits to go down.',
+    introCard3Title: 'How To Score',
+    introCard3Body: 'Fast combos multiply your points, and every knockout gives you a 50-point bonus.',
+    introBtn: 'Step Into The Ring',
+    startTitle: 'Punch AI Quotes',
+    startSub: 'People keep saying AI will replace you.<br>You have 30 seconds to punch back.',
+    rule1: '3 punches per challenger',
+    rule2: 'Fast combos multiply points',
+    rule3: 'Each KO gives +50',
+    startBtn: 'Start 30-Second Challenge',
+    hudKo: 'KO',
+    hudScore: 'Score',
+    timeUp: "Time's Up!",
+    statKo: 'KOs',
+    statScore: 'Score',
+    statCombo: 'Best Combo',
+    ratingPending: 'Calculating rating...',
+    shareTitle: 'Share your score!',
+    shareX: '𝕏 / Twitter',
+    shareLine: 'LINE',
+    copy: 'Copy Score',
+    copied: 'Copied!',
+    retry: 'Fight Again',
+    stopRun: 'End Run',
+    newChallenger: 'New Challenger!',
+    koBonus: 'K.O.! +50',
+    hashtags: '#PunchAIQuotes #AIWontReplaceYou',
+    langSwitch: '中文版',
+    punchWords: ['POW!','BAM!','WHAM!','KAPOW!','ZAP!','SMASH!','RIGHT HOOK!','BOOM!'],
+    infiniteBtn: 'Infinite Mode',
+    endlessTimer: '∞',
+  },
+};
+
 /* ─── Audio Engine ─── */
 let actx = null;
 function getAC() {
@@ -317,52 +512,96 @@ function playNewChallenger() {
 }
 
 /* ─── Game Data ─── */
-const CHARS = [
-  {skin:'#F5C4B3',suit:'#26215C',tie:'#E24B4A',name:'LinkedIn CEO 大大'},
-  {skin:'#F5D9A8',suit:'#185FA5',tie:'#1D9E75',name:'矽谷創業家'},
-  {skin:'#E8C0A0',suit:'#3B6D11',tie:'#EF9F27',name:'VC 投資人'},
-  {skin:'#D8A8C0',suit:'#8B2351',tie:'#FAC775',name:'科技記者'},
-  {skin:'#C8DCE8',suit:'#0C447C',tie:'#E24B4A',name:'AI 預言家'},
-  {skin:'#F5C4A0',suit:'#5A3A1A',tie:'#1D9E75',name:'部落格神人'},
-  {skin:'#D0DCC8',suit:'#633806',tie:'#26215C',name:'Podcast 主持人'},
-  {skin:'#F0B8B8',suit:'#412402',tie:'#185FA5',name:'自稱未來學家'},
+const STYLES = [
+  {skin:'#F5C4B3',suit:'#26215C',tie:'#E24B4A'},
+  {skin:'#F5D9A8',suit:'#185FA5',tie:'#1D9E75'},
+  {skin:'#E8C0A0',suit:'#3B6D11',tie:'#EF9F27'},
+  {skin:'#D8A8C0',suit:'#8B2351',tie:'#FAC775'},
+  {skin:'#C8DCE8',suit:'#0C447C',tie:'#E24B4A'},
+  {skin:'#F5C4A0',suit:'#5A3A1A',tie:'#1D9E75'},
+  {skin:'#D0DCC8',suit:'#633806',tie:'#26215C'},
+  {skin:'#F0B8B8',suit:'#412402',tie:'#185FA5'},
 ];
-const QS = [
-  {t:'AI 會取代設計師，你們早點轉行吧！',s:'LinkedIn CEO 貼文'},
-  {t:'ChatGPT 一秒生圖，設計師根本快要失業了！',s:'科技媒體頭條'},
-  {t:'程式設計師即將絕種，AI 寫 code 比人類快 100 倍！',s:'矽谷創業家 Twitter'},
-  {t:'再過兩年公司不需要工程師，只要會下 prompt 就夠了！',s:'VC 投資人演講'},
-  {t:'AI 已能取代 95% 的創意工作，還在學設計根本浪費！',s:'網路熱傳爆文'},
-  {t:'你學編程沒意義了，AI 比你寫得又快又好！',s:'Quora 神秘作家'},
-  {t:'工程師？那是上個世紀的職業，現在趕快轉行吧！',s:'Twitter 百萬粉大V'},
-  {t:'設計師的工作很快就會消失，Midjourney 全部包辦！',s:'部落格爆款文'},
-  {t:'你花三年學的設計技能，AI 三秒就全部取代了！',s:'YouTube 科技節目'},
-  {t:'連 CTO 都說可以裁掉整個工程師團隊改用 AI！',s:'科技新聞'},
-  {t:'創意已死！AI 比任何人類藝術家都更有創意！',s:'自稱藝評人'},
-  {t:'不懂 AI，你的工作就等著被取代！設計師尤其危險！',s:'LinkedIn 爆款長文'},
-  {t:'未來公司只需要一個 AI，不需要任何設計師或工程師！',s:'商業週刊專欄'},
-  {t:'軟體工程師薪資泡沫即將破裂，AI 取代是必然！',s:'財經 Podcast 主持人'},
-  {t:'學任何創意或技術職能都沒用，AI 幾年內統統取代！',s:'自稱 AI 預言家'},
-  {t:'你的設計已經比不上 AI，承認現實吧！',s:'設計社群留言'},
-  {t:'以後公司寧可多買幾個 AI 授權也不要多一個設計師！',s:'新創 CEO 訪談'},
-  {t:'現在學前端開發？那等於在學馬車製造！',s:'科技評論家'},
-  {t:'人類工程師是昂貴的過渡期產物，AI 才是終點！',s:'未來學家演講'},
-  {t:'給設計師的忠告：趁早學 AI，不然就等著被淘汰！',s:'業界顧問報告'},
+const NPCS = [
+  {...STYLES[0], label:'社群平台爆款貼文', enLabel:'Viral Social Post', text:'AI 會取代設計師，你們早點轉行吧！', enText:'AI will replace designers, so you should switch careers now!'},
+  {...STYLES[1], label:'科技網站大標', enLabel:'Tech Site Headline', text:'AI 生圖工具一秒出圖，設計師根本快要失業了！', enText:'AI image tools can create visuals in a second. Designers are basically about to be unemployed!'},
+  {...STYLES[2], label:'新創創辦人貼文', enLabel:'Startup Founder Post', text:'程式設計師即將絕種，AI 寫 code 比人類快 100 倍！', enText:'Software engineers are going extinct. AI writes code 100 times faster than humans!'},
+  {...STYLES[3], label:'投資圈演講片段', enLabel:'Investor Talk Clip', text:'再過兩年公司不需要工程師，只要會下 prompt 就夠了！', enText:'In two years, companies will not need engineers. Prompting will be enough!'},
+  {...STYLES[4], label:'社群熱傳長文', enLabel:'Viral Community Essay', text:'AI 已能取代 95% 的創意工作，還在學設計根本浪費！', enText:'AI can already replace 95% of creative work. Studying design now is a waste!'},
+  {...STYLES[5], label:'匿名問答留言', enLabel:'Anonymous Q&A Comment', text:'你學編程沒意義了，AI 比你寫得又快又好！', enText:'Learning to code is meaningless now. AI writes faster and better than you!'},
+  {...STYLES[6], label:'百萬粉帳號發言', enLabel:'Million-Follower Account', text:'工程師？那是上個世紀的職業，現在趕快轉行吧！', enText:'Engineer? That is a last-century job. Switch careers while you still can!'},
+  {...STYLES[7], label:'科技部落格文章', enLabel:'Tech Blog Post', text:'設計師的工作很快就會消失，AI 生圖工具全部包辦！', enText:'Design jobs will disappear soon. AI image tools can handle all of it!'},
+  {...STYLES[0], label:'影片節目片段', enLabel:'Video Show Segment', text:'你花三年學的設計技能，AI 三秒就全部取代了！', enText:'The design skills you spent three years learning can be replaced by AI in three seconds!'},
+  {...STYLES[1], label:'產業新聞摘要', enLabel:'Industry News Recap', text:'連技術主管都說可以裁掉整個工程師團隊改用 AI！', enText:'Even technical leads say entire engineering teams can be replaced by AI!'},
+  {...STYLES[2], label:'自稱藝評人', enLabel:'Self-Proclaimed Art Critic', text:'創意已死！AI 比任何人類藝術家都更有創意！', enText:'Creativity is dead. AI is more creative than any human artist!'},
+  {...STYLES[3], label:'社群爆款長文', enLabel:'Viral Feed Essay', text:'不懂 AI，你的工作就等著被取代！設計師尤其危險！', enText:'If you do not understand AI, your job is next. Designers are especially in danger!'},
+  {...STYLES[4], label:'管理專欄', enLabel:'Management Column', text:'未來公司只需要一個 AI，不需要任何設計師或工程師！', enText:'Soon companies will only need one AI, not designers or engineers!'},
+  {...STYLES[5], label:'財經節目主持人', enLabel:'Finance Show Host', text:'軟體工程師薪資泡沫即將破裂，AI 取代是必然！', enText:'Software engineering salaries are a bubble, and AI replacement is inevitable!'},
+  {...STYLES[6], label:'自稱 AI 預言家', enLabel:'Self-Proclaimed AI Prophet', text:'學任何創意或技術職能都沒用，AI 幾年內統統取代！', enText:'Any creative or technical skill will be replaced by AI within a few years!'},
+  {...STYLES[7], label:'設計社群留言', enLabel:'Design Community Comment', text:'你的設計已經比不上 AI，承認現實吧！', enText:'Your design is already worse than AI. Accept reality!'},
+  {...STYLES[0], label:'新創訪談片段', enLabel:'Startup Interview Clip', text:'以後公司寧可多買幾個 AI 授權也不要多一個設計師！', enText:'Companies would rather buy more AI licenses than hire one more designer!'},
+  {...STYLES[1], label:'科技觀察文章', enLabel:'Tech Commentary Piece', text:'現在學前端開發？那等於在學馬車製造！', enText:'Learning frontend now is like learning how to build horse carriages!'},
+  {...STYLES[2], label:'趨勢演講片段', enLabel:'Trend Talk Clip', text:'人類工程師是昂貴的過渡期產物，AI 才是終點！', enText:'Human engineers are just an expensive transitional phase. AI is the destination!'},
+  {...STYLES[3], label:'職涯建議報告', enLabel:'Career Advice Report', text:'給設計師的忠告：趁早學 AI，不然就等著被淘汰！', enText:'Advice for designers: learn AI now, or get left behind!'},
 ];
-const PW = ['POW!','BAM!','WHAM!','KAPOW!','ZAP!','SMASH!','打到了！','給你！'];
 const RATINGS = [
-  [0,'還在熱身中…','慢慢來！'],
-  [1,'新手拳手','初出茅廬'],
-  [3,'業餘選手','有兩把刷子'],
-  [5,'職業拳擊手','讚讚讚！'],
-  [8,'AI 終結者','神！完全無敵！'],
+  {min:0,title:{zh:'還在熱身中…',en:'Still Warming Up'},sub:{zh:'慢慢來！',en:'Take your time!'}},
+  {min:1,title:{zh:'新手拳手',en:'Rookie Puncher'},sub:{zh:'初出茅廬',en:'A promising start'}},
+  {min:3,title:{zh:'業餘選手',en:'Amateur Contender'},sub:{zh:'有兩把刷子',en:'You have some hands'}},
+  {min:5,title:{zh:'職業拳擊手',en:'Prize Fighter'},sub:{zh:'讚讚讚！',en:'You came to work'}},
+  {min:8,title:{zh:'AI 終結者',en:'AI Terminator'},sub:{zh:'神！完全無敵！',en:'Absolute menace'}},
 ];
 
 /* ─── State ─── */
-let GST='start',tLeft=30,sc=0,koC=0,cb=1,maxCb=1,nHP=3,lt=0,pt=0,tIv=null,cOrder=[],cPos=0,uQ=[],busy=false,prevSec=30;
+let GST='start',tLeft=30,sc=0,koC=0,cb=1,maxCb=1,nHP=3,lt=0,pt=0,tIv=null,cOrder=[],cPos=0,busy=false,prevSec=30,gameMode='timed';
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function nextQ(){if(uQ.length>=QS.length)uQ=[];let i;do{i=Math.floor(Math.random()*QS.length)}while(uQ.includes(i));uQ.push(i);return QS[i];}
+function ui(key){return UI[LANG][key]}
+function getNpcLabel(npc){return LANG==='en' ? npc.enLabel : npc.label}
+function getNpcText(npc){return LANG==='en' ? npc.enText : npc.text}
+function getPunchWords(){return ui('punchWords')}
+function getLangHref(){return window.location.pathname + (LANG === 'en' ? '' : '?lang=en')}
+function showStartScreen() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('ss').style.display = 'flex';
+}
+function applyLanguage() {
+  document.documentElement.lang = ui('htmlLang');
+  document.title = ui('title');
+  document.querySelector('meta[name="description"]').setAttribute('content', ui('description'));
+  document.getElementById('lang-switch').textContent = ui('langSwitch');
+  document.getElementById('lang-switch').href = getLangHref();
+  document.getElementById('ibadge').textContent = ui('introBadge');
+  document.getElementById('ititle').textContent = ui('introTitle');
+  document.getElementById('isub').textContent = ui('introSub');
+  document.getElementById('ic1h').textContent = ui('introCard1Title');
+  document.getElementById('ic1b').textContent = ui('introCard1Body');
+  document.getElementById('ic2h').textContent = ui('introCard2Title');
+  document.getElementById('ic2b').textContent = ui('introCard2Body');
+  document.getElementById('ic3h').textContent = ui('introCard3Title');
+  document.getElementById('ic3b').textContent = ui('introCard3Body');
+  document.getElementById('ibtn').textContent = ui('introBtn');
+  document.getElementById('gtitle').textContent = ui('startTitle');
+  document.getElementById('ssub').innerHTML = ui('startSub');
+  document.getElementById('rule1').textContent = ui('rule1');
+  document.getElementById('rule2').textContent = ui('rule2');
+  document.getElementById('rule3').textContent = ui('rule3');
+  document.getElementById('sbtn').textContent = ui('startBtn');
+  document.getElementById('sbtn-infinite').textContent = ui('infiniteBtn');
+  document.getElementById('hud-ko-label').textContent = ui('hudKo');
+  document.getElementById('hud-score-label').textContent = ui('hudScore');
+  document.getElementById('stopbtn').textContent = ui('stopRun');
+  document.getElementById('etimeup').textContent = ui('timeUp');
+  document.getElementById('eko-label').textContent = ui('statKo');
+  document.getElementById('esc-label').textContent = ui('statScore');
+  document.getElementById('ecb-label').textContent = ui('statCombo');
+  document.getElementById('rating').textContent = ui('ratingPending');
+  document.getElementById('share-title').textContent = ui('shareTitle');
+  document.getElementById('twbtn').textContent = ui('shareX');
+  document.getElementById('lnbtn').textContent = ui('shareLine');
+  document.getElementById('cpbtn').textContent = ui('copy');
+  document.getElementById('rbtn').textContent = ui('retry');
+}
 
 /* ─── Glove Targeting ─── */
 function getGloveTarget() {
@@ -414,15 +653,14 @@ function applyChar(c) {
   document.getElementById('ll').style.background = c.suit;
   document.getElementById('lr').style.background = c.suit;
   document.getElementById('tie').style.background = c.tie;
-  document.getElementById('nname').textContent = c.name;
+  document.getElementById('nname').textContent = getNpcLabel(c);
 }
 
 function spawnNPC(cls) {
-  const c = CHARS[cOrder[cPos % cOrder.length]]; cPos++;
-  applyChar(c);
-  const q = nextQ();
-  document.getElementById('qt').textContent = q.t;
-  document.getElementById('qs').textContent = '— ' + q.s;
+  const npcData = NPCS[cOrder[cPos % cOrder.length]]; cPos++;
+  applyChar(npcData);
+  document.getElementById('qt').textContent = getNpcText(npcData);
+  document.getElementById('qs').textContent = '— ' + getNpcLabel(npcData);
   nHP = 3; updHP(); setFace('ok');
   const npc = document.getElementById('npc');
   npc.style.opacity = '1'; npc.style.transform = '';
@@ -459,7 +697,8 @@ function punch(e) {
   lt = now; busy = true; setTimeout(() => busy = false, 200);
 
   // Glove fires toward head
-  fireGlove(pt === 0 ? 'left' : 'right'); pt = 1 - pt;
+  const punchSide = pt === 0 ? 'left' : 'right';
+  fireGlove(punchSide); pt = 1 - pt;
 
   // NPC shake
   const npc = document.getElementById('npc');
@@ -477,11 +716,14 @@ function punch(e) {
 
   // POW word near NPC head
   const pw = document.getElementById('pw');
-  pw.textContent = PW[Math.floor(Math.random() * PW.length)];
+  pw.textContent = getPunchWords()[Math.floor(Math.random() * getPunchWords().length)];
   const npcR = document.getElementById('hd').getBoundingClientRect();
   const arR = document.getElementById('arena').getBoundingClientRect();
-  pw.style.left = Math.max(10, npcR.left - arR.left - 20 + Math.random() * 40) + 'px';
-  pw.style.top = Math.max(10, npcR.top - arR.top - 30) + 'px';
+  const pwLeft = punchSide === 'left'
+    ? npcR.right - arR.left + 14
+    : npcR.left - arR.left - 122;
+  pw.style.left = Math.max(10, Math.min(arR.width - 140, pwLeft)) + 'px';
+  pw.style.top = Math.max(12, npcR.top - arR.top + 8 + Math.random() * 10) + 'px';
   pw.classList.remove('pop'); void pw.offsetWidth; pw.classList.add('pop');
 
   spawnStars();
@@ -510,14 +752,14 @@ function doKO() {
   kb.classList.remove('go'); void kb.offsetWidth; kb.classList.add('go');
   playKO();
   for (let i = 0; i < 4; i++) setTimeout(spawnStars, i * 110);
-  setTimeout(() => showPop('K.O.! +50'), 150);
+  setTimeout(() => showPop(ui('koBonus')), 150);
 
   setTimeout(() => {
     npc.className = ''; npc.style.opacity = '0'; npc.style.transform = '';
     if (tLeft <= 0) { GST = 'ending'; return; }
     setTimeout(() => {
       const banner = document.createElement('div');
-      banner.className = 'nc-banner'; banner.textContent = '新挑戰者出現！';
+      banner.className = 'nc-banner'; banner.textContent = ui('newChallenger');
       document.getElementById('arena').appendChild(banner);
       setTimeout(() => banner.remove(), 820);
       playNewChallenger();
@@ -555,6 +797,7 @@ function spawnStars() {
 
 /* ─── Timer ─── */
 function tick() {
+  if (gameMode !== 'timed') return;
   tLeft = Math.max(0, tLeft - 0.1);
   const t = Math.ceil(tLeft);
   const td = document.getElementById('td');
@@ -565,27 +808,43 @@ function tick() {
 }
 
 /* ─── Start / End / Reset ─── */
-function startGame() {
+function stopInfiniteGame(e) {
+  e.stopPropagation();
+  if (gameMode !== 'infinite' || GST === 'ended' || GST === 'ending') return;
+  GST = 'ending';
+  endGame();
+}
+
+function startGame(mode = 'timed') {
   getAC(); // unlock audio context on user gesture
+  document.getElementById('intro').style.display = 'none';
   document.getElementById('ss').style.display = 'none';
   document.getElementById('hud').style.display = 'flex';
-  document.getElementById('tbw').style.display = 'block';
   document.getElementById('arena').style.display = 'flex';
   document.getElementById('garea').style.display = 'block';
-  cOrder = shuffle([...Array(CHARS.length).keys()]);
-  cPos = 0; tLeft = 30; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; uQ = []; busy = false; prevSec = 30;
+  document.getElementById('es').classList.remove('on');
+  clearInterval(tIv);
+  gameMode = mode;
+  cOrder = shuffle([...Array(NPCS.length).keys()]);
+  cPos = 0; tLeft = mode === 'timed' ? 30 : Infinity; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; busy = false; prevSec = 30;
+  document.getElementById('tbw').style.display = mode === 'timed' ? 'block' : 'none';
+  document.getElementById('stopbtn').style.display = mode === 'infinite' ? 'inline-flex' : 'none';
+  document.getElementById('td').textContent = mode === 'timed' ? '30' : ui('endlessTimer');
+  document.getElementById('td').className = '';
+  document.getElementById('tb').style.width = '100%';
   updHUD(); spawnNPC('enr'); GST = 'playing';
-  tIv = setInterval(tick, 100);
+  if (mode === 'timed') tIv = setInterval(tick, 100);
 }
 
 function endGame() {
   clearInterval(tIv); GST = 'ended';
+  document.getElementById('stopbtn').style.display = 'none';
   document.getElementById('eko').textContent = koC;
   document.getElementById('esc').textContent = sc;
   document.getElementById('ecb').textContent = maxCb;
   let r = RATINGS[0];
-  for (const [k, title, sub] of RATINGS) if (koC >= k) r = [k, title, sub];
-  document.getElementById('rating').textContent = r[1] + ' — ' + r[2];
+  for (const rating of RATINGS) if (koC >= rating.min) r = rating;
+  document.getElementById('rating').textContent = r.title[LANG] + ' — ' + r.sub[LANG];
   setTimeout(() => document.getElementById('es').classList.add('on'), 400);
 }
 
@@ -594,7 +853,10 @@ function getShareUrl() {
 }
 
 function getTxt() {
-  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！\n${getShareUrl()}\n\n#扁AI語錄 #AI不會取代你`;
+  if (LANG === 'en') {
+    return `In the 30-second challenge, I knocked out ${koC} AI hot-take hustlers!\nScored ${sc} points, best combo x${maxCb}!\nRating: ${document.getElementById('rating').textContent.split('—')[0].trim()}\n\nCan you beat it?\n${getShareUrl()}\n\n${ui('hashtags')}`;
+  }
+  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！\n${getShareUrl()}\n\n${ui('hashtags')}`;
 }
 
 function shareX()     { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getTxt()), '_blank'); }
@@ -602,21 +864,15 @@ function shareLine()  { window.open('https://social-plugins.line.me/lineit/share
 function copyScore()  {
   const btn = document.getElementById('cpbtn');
   (navigator.clipboard ? navigator.clipboard.writeText(getTxt()) : Promise.reject())
-    .then(() => { btn.textContent = '已複製！'; setTimeout(() => btn.textContent = '複製成績', 2000); })
-    .catch(() => { btn.textContent = '已複製！'; setTimeout(() => btn.textContent = '複製成績', 2000); });
+    .then(() => { btn.textContent = ui('copied'); setTimeout(() => btn.textContent = ui('copy'), 2000); })
+    .catch(() => { btn.textContent = ui('copied'); setTimeout(() => btn.textContent = ui('copy'), 2000); });
 }
 
 function resetGame(e) {
   e.stopPropagation();
-  clearInterval(tIv);
-  document.getElementById('es').classList.remove('on');
-  tLeft = 30; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; uQ = []; busy = false; prevSec = 30;
-  cOrder = shuffle([...Array(CHARS.length).keys()]); cPos = 0;
-  document.getElementById('td').textContent = '30'; document.getElementById('td').className = '';
-  document.getElementById('tb').style.width = '100%';
-  updHUD(); spawnNPC('enr'); GST = 'playing';
-  tIv = setInterval(tick, 100);
+  startGame(gameMode);
 }
+applyLanguage();
 </script>
 </body>
 </html>
