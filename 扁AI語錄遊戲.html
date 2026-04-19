@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>扁 AI 語錄 — 30秒限時拳擊挑戰</title>
+<meta name="description" content="30 秒限時拳擊小遊戲，打爆滿口 AI 會取代你的語錄神棍。">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif}
@@ -588,8 +589,12 @@ function endGame() {
   setTimeout(() => document.getElementById('es').classList.add('on'), 400);
 }
 
+function getShareUrl() {
+  return window.location.href;
+}
+
 function getTxt() {
-  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！ #扁AI語錄 #AI不會取代你`;
+  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！\n${getShareUrl()}\n\n#扁AI語錄 #AI不會取代你`;
 }
 
 function shareX()     { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getTxt()), '_blank'); }
