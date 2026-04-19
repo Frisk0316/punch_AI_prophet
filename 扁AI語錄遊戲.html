@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扁 AI 語錄 — 30秒限時拳擊挑戰</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#2C2C2A;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif}
+#game{background:#FFF5D6;border:4px solid #3D1F08;border-radius:14px;width:500px;min-height:580px;overflow:hidden;cursor:crosshair;position:relative;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+#hud{display:none;justify-content:space-between;align-items:center;padding:10px 18px;background:#3D1F08;color:#FAC775;font-size:13px;font-weight:700;flex-shrink:0}
+#td{font-size:22px;font-weight:900;color:#FAC775;font-variant-numeric:tabular-nums;min-width:36px;text-align:center;transition:color .2s}
+#td.urg{color:#E24B4A;animation:tpulse .45s infinite alternate}
+@keyframes tpulse{from{opacity:1}to{opacity:.5}}
+#tbw{height:5px;background:#7A3E10;display:none;flex-shrink:0}
+#tb{height:5px;background:#FAC775;width:100%;transition:width .1s linear}
+
+/* Arena */
+#arena{flex:1;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 16px 0;position:relative;min-height:320px;overflow:hidden}
+#bub{background:#fff;border:3px solid #3D1F08;border-radius:16px;padding:12px 18px;width:100%;text-align:center;position:relative;margin-bottom:22px;transition:opacity .2s,transform .2s;min-height:70px}
+#bub.hide{opacity:0;transform:translateY(-8px);pointer-events:none}
+#bub::after{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);border:11px solid transparent;border-top:20px solid #3D1F08}
+#bub::before{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top:16px solid #fff;z-index:1}
+#qt{font-size:13.5px;color:#2C2C2A;line-height:1.65;font-weight:600}
+#qs{font-size:11px;color:#888780;margin-top:4px}
+#hpbar{display:flex;gap:8px;margin-bottom:6px}
+.hp{width:14px;height:14px;border-radius:50%;background:#E24B4A;border:2px solid #3D1F08;transition:all .2s}
+.hp.e{background:#FFF5D6;border-color:#BA7517}
+#nname{font-size:11px;color:#633806;font-weight:700;background:#FAC775;border:2px solid #BA7517;border-radius:4px;padding:2px 10px;margin-bottom:6px;text-align:center}
+
+/* NPC wrapper — fixed height so gloves know where to aim */
+#npcw{position:relative;width:120px;height:160px;display:flex;align-items:flex-end;justify-content:center}
+#npc{display:flex;flex-direction:column;align-items:center;transform-origin:50% 100%}
+#npc.shk{animation:shk .35s}
+#npc.ko{animation:nko .6s ease-in forwards}
+#npc.enr{animation:enr .4s cubic-bezier(.2,1.4,.6,1)}
+#npc.enl{animation:enl .4s cubic-bezier(.2,1.4,.6,1)}
+@keyframes shk{0%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-6deg)}50%{transform:translateX(8px) rotate(5deg)}75%{transform:translateX(-4px) rotate(-2deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes nko{0%{transform:rotate(0) translateX(0)}25%{transform:rotate(-14deg) translateX(-10px)}65%{transform:rotate(-82deg) translateX(-55px) translateY(28px)}100%{transform:rotate(-94deg) translateX(-90px) translateY(50px);opacity:0}}
+@keyframes enr{from{transform:translateX(160px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes enl{from{transform:translateX(-160px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Face */
+#hd{width:58px;height:58px;border:3px solid #3D1F08;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:1}
+#eys{display:flex;gap:14px}
+.ey{width:7px;height:7px;background:#2C2C2A;border-radius:50%;transition:all .15s}
+.ey.sq{height:3px;border-radius:1px;margin-top:2px}
+.ey.x{background:transparent!important;position:relative;border-radius:0}
+.ey.x::before,.ey.x::after{content:'';position:absolute;width:11px;height:2.5px;background:#2C2C2A;border-radius:1px;top:50%;left:50%}
+.ey.x::before{transform:translate(-50%,-50%) rotate(45deg)}
+.ey.x::after{transform:translate(-50%,-50%) rotate(-45deg)}
+#mth{width:18px;height:7px;border:2px solid #3D1F08;border-top:none;border-radius:0 0 9px 9px;transition:all .15s}
+#mth.sad{border-top:2px solid #3D1F08;border-bottom:none;border-radius:9px 9px 0 0}
+#mth.open{width:20px;height:14px;background:#3D1F08;border:2px solid #3D1F08;border-top:none;border-radius:0 0 5px 5px}
+#tor{width:48px;height:48px;border:3px solid #3D1F08;margin-top:-3px;border-radius:3px 3px 0 0;position:relative;display:flex;justify-content:center;overflow:visible}
+#tie{width:10px;height:26px;clip-path:polygon(50% 0%,100% 30%,50% 100%,0% 30%);margin-top:6px}
+#lgs{display:flex;gap:4px;margin-top:-2px}
+.lg{width:19px;height:24px;border:3px solid #3D1F08;border-top:none;border-radius:0 0 4px 4px}
+.sh{width:24px;height:10px;background:#2C2C2A;border:2px solid #3D1F08;border-radius:0 5px 5px 0;margin-top:-1px;margin-left:-2px}
+
+/* KO Banner */
+#kobanner{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) scale(0);font-size:54px;font-weight:900;color:#EF9F27;-webkit-text-stroke:4px #3D1F08;font-family:Impact,sans-serif;z-index:12;pointer-events:none;letter-spacing:3px;white-space:nowrap}
+#kobanner.go{animation:koban .85s ease-out forwards}
+@keyframes koban{0%{transform:translate(-50%,-50%) scale(0) rotate(-12deg)}35%{transform:translate(-50%,-50%) scale(1.3) rotate(6deg)}60%{transform:translate(-50%,-50%) scale(1) rotate(-1deg)}82%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1) translateY(-15px);opacity:0}}
+
+/* Punch word */
+#pw{position:absolute;font-size:48px;font-weight:900;color:#E24B4A;-webkit-text-stroke:3px #3D1F08;display:none;pointer-events:none;z-index:10;font-family:Impact,'Arial Black',sans-serif;letter-spacing:-2px}
+#pw.pop{display:block;animation:ppop .65s ease-out forwards}
+@keyframes ppop{0%{opacity:1;transform:scale(.4) rotate(-14deg)}50%{opacity:1;transform:scale(1.3) rotate(6deg)}100%{opacity:0;transform:scale(1.05) rotate(-4deg) translateY(-28px)}}
+
+/* Stars */
+.str{position:absolute;width:11px;height:11px;background:#EF9F27;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);pointer-events:none;z-index:9}
+.scp{position:absolute;font-size:16px;font-weight:700;color:#0F6E56;pointer-events:none;z-index:15;animation:scf .75s ease-out forwards;white-space:nowrap}
+@keyframes scf{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+#fl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;border-radius:10px;z-index:8;transition:opacity .13s}
+
+/* New challenger banner */
+.nc-banner{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:800;color:#D85A30;-webkit-text-stroke:1px #3D1F08;z-index:11;pointer-events:none;white-space:nowrap;animation:ncb .8s ease-out forwards}
+@keyframes ncb{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.95) translateY(-18px)}}
+
+/* Glove area — ABSOLUTE so we can position fists precisely */
+#garea{display:none;position:relative;height:130px;flex-shrink:0;pointer-events:none}
+
+/* Each glove wrapper — will be translated via JS toward NPC */
+.gw{position:absolute;display:flex;flex-direction:column;align-items:center;bottom:0;transition:transform .22s cubic-bezier(.4,0,.2,1)}
+#gw-left{left:30px}
+#gw-right{right:30px}
+
+/* Glove shape */
+.gl{width:80px;height:66px;border:3px solid #3D1F08;border-radius:50% 50% 36% 36%;position:relative}
+.gl::before{content:'';position:absolute;width:24px;height:28px;border:3px solid #3D1F08;border-radius:40% 60% 0 0;border-bottom:none}
+.left.gl::before{right:9px;top:-24px;background:inherit}
+.right.gl::before{left:9px;top:-24px;background:inherit}
+.wst{width:50px;height:22px;background:#BA7517;border:3px solid #3D1F08;border-top:none;border-radius:0 0 6px 6px}
+
+/* Start Screen */
+#ss{position:absolute;inset:0;background:#FFF5D6;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:30;padding:26px}
+#gtitle{font-size:48px;font-weight:900;color:#D85A30;-webkit-text-stroke:3px #3D1F08;font-family:Impact,sans-serif;letter-spacing:5px;text-align:center}
+.s-sub{font-size:14px;color:#633806;text-align:center;line-height:1.75;max-width:300px;font-weight:500}
+.rules{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.rule{font-size:12px;color:#888780;background:#fff;border:2px solid #BA7517;border-radius:6px;padding:4px 10px}
+#sbtn{padding:14px 40px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:10px;font-size:18px;font-weight:800;cursor:pointer;letter-spacing:1px}
+#sbtn:hover{background:#993C1D;transform:scale(1.03)}
+
+/* End Screen */
+#es{display:none;position:absolute;inset:0;background:#FFF5D6;border-radius:10px;flex-direction:column;align-items:center;justify-content:center;gap:13px;z-index:30;padding:22px}
+#es.on{display:flex}
+.et{font-size:38px;font-weight:900;color:#D85A30;-webkit-text-stroke:2px #3D1F08;font-family:Impact,sans-serif;letter-spacing:3px}
+.estats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.sbox{background:#fff;border:3px solid #3D1F08;border-radius:10px;padding:10px 18px;text-align:center;min-width:90px}
+.snum{font-size:30px;font-weight:900;color:#D85A30}
+.slbl{font-size:11px;color:#888780;font-weight:600;margin-top:2px}
+.rating{font-size:15px;color:#3D1F08;font-weight:700;background:#FAC775;border:2px solid #BA7517;border-radius:8px;padding:7px 20px;text-align:center}
+.sh-title{font-size:13px;color:#3D1F08;font-weight:700;margin-top:2px}
+.sh-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.shbtn{padding:9px 16px;border:3px solid #3D1F08;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;line-height:1;white-space:nowrap}
+.shbtn.tw{background:#000;color:#fff}
+.shbtn.ln{background:#00B900;color:#fff}
+.shbtn.cp{background:#fff;color:#3D1F08}
+.shbtn:hover{opacity:.85}
+#rbtn{padding:10px 28px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer}
+#rbtn:hover{background:#993C1D}
+</style>
+</head>
+<body>
+<div id="game">
+  <!-- HUD -->
+  <div id="hud">
+    <div>KO <span id="kos" style="font-size:19px;color:#EF9F27">0</span></div>
+    <div id="td">30</div>
+    <div>分數 <span id="sc">0</span></div>
+  </div>
+  <div id="tbw"><div id="tb"></div></div>
+
+  <!-- Arena -->
+  <div id="arena" onclick="punch(event)">
+    <div id="bub"><div id="qt"></div><div id="qs"></div></div>
+    <div id="hpbar"><div class="hp" id="h1"></div><div class="hp" id="h2"></div><div class="hp" id="h3"></div></div>
+    <div id="nname"></div>
+    <div id="npcw">
+      <div id="npc">
+        <div id="hd">
+          <div id="eys"><div class="ey" id="el"></div><div class="ey" id="er"></div></div>
+          <div id="mth"></div>
+        </div>
+        <div id="tor"><div id="tie"></div></div>
+        <div id="lgs">
+          <div><div class="lg" id="ll"></div><div class="sh"></div></div>
+          <div><div class="lg" id="lr"></div><div class="sh"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="kobanner">K.O.!</div>
+    <div id="pw"></div>
+    <div id="fl"></div>
+  </div>
+
+  <!-- Gloves -->
+  <div id="garea" onclick="punch(event)">
+    <div class="gw" id="gw-left">
+      <div class="gl left" id="gl-left" style="background:#D85A30"></div>
+      <div class="wst"></div>
+    </div>
+    <div class="gw" id="gw-right">
+      <div class="gl right" id="gl-right" style="background:#D85A30"></div>
+      <div class="wst"></div>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="ss">
+    <div id="gtitle">扁 AI 語錄</div>
+    <div class="s-sub">有人說 AI 會取代你？<br>30 秒限時，打爆所有 AI 神棍！</div>
+    <div class="rules">
+      <div class="rule">每人需 3 拳 KO</div>
+      <div class="rule">快速連擊加倍得分</div>
+      <div class="rule">KO 獎勵 +50 分</div>
+    </div>
+    <button id="sbtn" onclick="startGame()">開始 30 秒挑戰！</button>
+  </div>
+
+  <!-- End Screen -->
+  <div id="es">
+    <div class="et">時間到！</div>
+    <div class="estats">
+      <div class="sbox"><div class="snum" id="eko">0</div><div class="slbl">KO 人數</div></div>
+      <div class="sbox"><div class="snum" id="esc">0</div><div class="slbl">總得分</div></div>
+      <div class="sbox"><div class="snum" id="ecb">0</div><div class="slbl">最高連擊</div></div>
+    </div>
+    <div class="rating" id="rating">評級中...</div>
+    <div class="sh-title">分享你的成績！</div>
+    <div class="sh-btns">
+      <button class="shbtn tw" onclick="shareX()">𝕏 / Twitter</button>
+      <button class="shbtn ln" onclick="shareLine()">LINE</button>
+      <button class="shbtn cp" id="cpbtn" onclick="copyScore()">複製成績</button>
+    </div>
+    <button id="rbtn" onclick="resetGame(event)">再挑戰一次！</button>
+  </div>
+</div>
+
+<script>
+/* ─── Audio Engine ─── */
+let actx = null;
+function getAC() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  return actx;
+}
+function playHit(strength = 1) {
+  try {
+    const ac = getAC();
+    const t = ac.currentTime;
+    // Low thud
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(140 * strength, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+    gain.gain.setValueAtTime(0.7, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(t); osc.stop(t + 0.2);
+    // Impact crack (noise burst)
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.07, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const ns = ac.createBufferSource();
+    const nf = ac.createBiquadFilter();
+    const ng = ac.createGain();
+    nf.type = 'bandpass'; nf.frequency.value = 1800; nf.Q.value = 0.8;
+    ng.gain.setValueAtTime(0.5 * strength, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    ns.buffer = buf;
+    ns.connect(nf); nf.connect(ng); ng.connect(ac.destination);
+    ns.start(t); ns.stop(t + 0.07);
+  } catch(e) {}
+}
+function playKO() {
+  try {
+    const ac = getAC();
+    const t = ac.currentTime;
+    // Big thud
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(28, t + 0.35);
+    gain.gain.setValueAtTime(1.0, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(t); osc.stop(t + 0.4);
+    // Stars jingle — quick ascending tones
+    [0, 0.10, 0.20].forEach((dt, i) => {
+      const o2 = ac.createOscillator();
+      const g2 = ac.createGain();
+      o2.type = 'triangle';
+      o2.frequency.value = 520 + i * 180;
+      g2.gain.setValueAtTime(0.25, t + dt);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.12);
+      o2.connect(g2); g2.connect(ac.destination);
+      o2.start(t + dt); o2.stop(t + dt + 0.15);
+    });
+    // Crowd "wooo" — noise filtered to cheering freq
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+    const dd = buf.getChannelData(0);
+    for (let i = 0; i < dd.length; i++) dd[i] = (Math.random() * 2 - 1) * (1 - i / dd.length) * 0.3;
+    const ns = ac.createBufferSource();
+    const nf = ac.createBiquadFilter();
+    const ng = ac.createGain();
+    nf.type = 'bandpass'; nf.frequency.value = 600; nf.Q.value = 1.2;
+    ng.gain.setValueAtTime(0.6, t + 0.05);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    ns.buffer = buf;
+    ns.connect(nf); nf.connect(ng); ng.connect(ac.destination);
+    ns.start(t + 0.05); ns.stop(t + 0.5);
+  } catch(e) {}
+}
+function playTimeUp() {
+  try {
+    const ac = getAC();
+    const t = ac.currentTime;
+    [0, 0.15, 0.3, 0.48].forEach((dt, i) => {
+      const freqs = [440, 370, 330, 220];
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = 'square'; o.frequency.value = freqs[i];
+      g.gain.setValueAtTime(0.2, t + dt);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.13);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t + dt); o.stop(t + dt + 0.15);
+    });
+  } catch(e) {}
+}
+function playTickBeep() {
+  try {
+    const ac = getAC();
+    const t = ac.currentTime;
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.type = 'square'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); o.stop(t + 0.07);
+  } catch(e) {}
+}
+function playNewChallenger() {
+  try {
+    const ac = getAC();
+    const t = ac.currentTime;
+    [0,0.09,0.18].forEach((dt,i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'triangle'; o.frequency.value = 330 + i * 110;
+      g.gain.setValueAtTime(0.2, t+dt); g.gain.exponentialRampToValueAtTime(0.001, t+dt+0.1);
+      o.connect(g); g.connect(ac.destination); o.start(t+dt); o.stop(t+dt+0.12);
+    });
+  } catch(e){}
+}
+
+/* ─── Game Data ─── */
+const CHARS = [
+  {skin:'#F5C4B3',suit:'#26215C',tie:'#E24B4A',name:'LinkedIn CEO 大大'},
+  {skin:'#F5D9A8',suit:'#185FA5',tie:'#1D9E75',name:'矽谷創業家'},
+  {skin:'#E8C0A0',suit:'#3B6D11',tie:'#EF9F27',name:'VC 投資人'},
+  {skin:'#D8A8C0',suit:'#8B2351',tie:'#FAC775',name:'科技記者'},
+  {skin:'#C8DCE8',suit:'#0C447C',tie:'#E24B4A',name:'AI 預言家'},
+  {skin:'#F5C4A0',suit:'#5A3A1A',tie:'#1D9E75',name:'部落格神人'},
+  {skin:'#D0DCC8',suit:'#633806',tie:'#26215C',name:'Podcast 主持人'},
+  {skin:'#F0B8B8',suit:'#412402',tie:'#185FA5',name:'自稱未來學家'},
+];
+const QS = [
+  {t:'AI 會取代設計師，你們早點轉行吧！',s:'LinkedIn CEO 貼文'},
+  {t:'ChatGPT 一秒生圖，設計師根本快要失業了！',s:'科技媒體頭條'},
+  {t:'程式設計師即將絕種，AI 寫 code 比人類快 100 倍！',s:'矽谷創業家 Twitter'},
+  {t:'再過兩年公司不需要工程師，只要會下 prompt 就夠了！',s:'VC 投資人演講'},
+  {t:'AI 已能取代 95% 的創意工作，還在學設計根本浪費！',s:'網路熱傳爆文'},
+  {t:'你學編程沒意義了，AI 比你寫得又快又好！',s:'Quora 神秘作家'},
+  {t:'工程師？那是上個世紀的職業，現在趕快轉行吧！',s:'Twitter 百萬粉大V'},
+  {t:'設計師的工作很快就會消失，Midjourney 全部包辦！',s:'部落格爆款文'},
+  {t:'你花三年學的設計技能，AI 三秒就全部取代了！',s:'YouTube 科技節目'},
+  {t:'連 CTO 都說可以裁掉整個工程師團隊改用 AI！',s:'科技新聞'},
+  {t:'創意已死！AI 比任何人類藝術家都更有創意！',s:'自稱藝評人'},
+  {t:'不懂 AI，你的工作就等著被取代！設計師尤其危險！',s:'LinkedIn 爆款長文'},
+  {t:'未來公司只需要一個 AI，不需要任何設計師或工程師！',s:'商業週刊專欄'},
+  {t:'軟體工程師薪資泡沫即將破裂，AI 取代是必然！',s:'財經 Podcast 主持人'},
+  {t:'學任何創意或技術職能都沒用，AI 幾年內統統取代！',s:'自稱 AI 預言家'},
+  {t:'你的設計已經比不上 AI，承認現實吧！',s:'設計社群留言'},
+  {t:'以後公司寧可多買幾個 AI 授權也不要多一個設計師！',s:'新創 CEO 訪談'},
+  {t:'現在學前端開發？那等於在學馬車製造！',s:'科技評論家'},
+  {t:'人類工程師是昂貴的過渡期產物，AI 才是終點！',s:'未來學家演講'},
+  {t:'給設計師的忠告：趁早學 AI，不然就等著被淘汰！',s:'業界顧問報告'},
+];
+const PW = ['POW!','BAM!','WHAM!','KAPOW!','ZAP!','SMASH!','打到了！','給你！'];
+const RATINGS = [
+  [0,'還在熱身中…','慢慢來！'],
+  [1,'新手拳手','初出茅廬'],
+  [3,'業餘選手','有兩把刷子'],
+  [5,'職業拳擊手','讚讚讚！'],
+  [8,'AI 終結者','神！完全無敵！'],
+];
+
+/* ─── State ─── */
+let GST='start',tLeft=30,sc=0,koC=0,cb=1,maxCb=1,nHP=3,lt=0,pt=0,tIv=null,cOrder=[],cPos=0,uQ=[],busy=false,prevSec=30;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function nextQ(){if(uQ.length>=QS.length)uQ=[];let i;do{i=Math.floor(Math.random()*QS.length)}while(uQ.includes(i));uQ.push(i);return QS[i];}
+
+/* ─── Glove Targeting ─── */
+function getGloveTarget() {
+  // Returns {dx, dy} translation to move glove toward NPC head from rest position
+  const npcEl = document.getElementById('hd');
+  const gareaEl = document.getElementById('garea');
+  const leftGw = document.getElementById('gw-left');
+  const rightGw = document.getElementById('gw-right');
+
+  const npcR = npcEl.getBoundingClientRect();
+  const gareaR = gareaEl.getBoundingClientRect();
+  const leftR = leftGw.getBoundingClientRect();
+  const rightR = rightGw.getBoundingClientRect();
+
+  // NPC head center relative to garea
+  const headCX = npcR.left + npcR.width / 2 - gareaR.left;
+  const headCY = npcR.top + npcR.height / 2 - gareaR.top;
+
+  // Left glove center (top of gl) relative to garea
+  const leftCX = leftR.left + leftR.width / 2 - gareaR.left;
+  const leftTopY = leftR.top - gareaR.top;
+
+  const rightCX = rightR.left + rightR.width / 2 - gareaR.left;
+  const rightTopY = rightR.top - gareaR.top;
+
+  return {
+    left:  { dx: headCX - leftCX  + (Math.random()*16-8), dy: headCY - leftTopY  - 20 },
+    right: { dx: headCX - rightCX + (Math.random()*16-8), dy: headCY - rightTopY - 20 },
+  };
+}
+
+function fireGlove(side) {
+  const gw = document.getElementById('gw-' + side);
+  const target = getGloveTarget();
+  const {dx, dy} = target[side];
+  // Animate: shoot toward head then snap back
+  gw.style.transition = 'transform 0.13s cubic-bezier(0.2,0.8,0.3,1)';
+  gw.style.transform = `translate(${dx}px, ${dy}px) rotate(${side==='left'?-14:14}deg) scale(1.08)`;
+  setTimeout(() => {
+    gw.style.transition = 'transform 0.22s cubic-bezier(0.4,0,0.6,1)';
+    gw.style.transform = 'translate(0,0) rotate(0deg) scale(1)';
+  }, 160);
+}
+
+/* ─── NPC setup ─── */
+function applyChar(c) {
+  document.getElementById('hd').style.background = c.skin;
+  document.getElementById('tor').style.background = c.suit;
+  document.getElementById('ll').style.background = c.suit;
+  document.getElementById('lr').style.background = c.suit;
+  document.getElementById('tie').style.background = c.tie;
+  document.getElementById('nname').textContent = c.name;
+}
+
+function spawnNPC(cls) {
+  const c = CHARS[cOrder[cPos % cOrder.length]]; cPos++;
+  applyChar(c);
+  const q = nextQ();
+  document.getElementById('qt').textContent = q.t;
+  document.getElementById('qs').textContent = '— ' + q.s;
+  nHP = 3; updHP(); setFace('ok');
+  const npc = document.getElementById('npc');
+  npc.style.opacity = '1'; npc.style.transform = '';
+  npc.className = ''; void npc.offsetWidth; npc.className = cls;
+  document.getElementById('bub').classList.remove('hide');
+  document.getElementById('nname').style.opacity = '1';
+}
+
+function updHP() {
+  for (let i = 1; i <= 3; i++)
+    document.getElementById('h' + i).className = 'hp' + (i <= nHP ? '' : ' e');
+}
+
+function setFace(s) {
+  const el=document.getElementById('el'),er=document.getElementById('er'),m=document.getElementById('mth');
+  el.className='ey'; er.className='ey'; m.className='mth';
+  if (s==='hurt') { er.className='ey sq'; m.className='mth sad'; }
+  else if (s==='bad') { el.className='ey sq'; er.className='ey sq'; m.className='mth sad'; }
+  else if (s==='hit'||s==='ko') { el.className='ey x'; er.className='ey x'; m.className='mth open'; }
+}
+
+function updHUD() {
+  document.getElementById('sc').textContent = sc;
+  document.getElementById('kos').textContent = koC;
+}
+
+/* ─── Main Punch ─── */
+function punch(e) {
+  if (GST !== 'playing' || busy) return;
+  const now = Date.now();
+  if (now - lt < 200) return;
+  cb = (lt > 0 && now - lt < 1300) ? Math.min(cb + 1, 10) : 1;
+  maxCb = Math.max(maxCb, cb);
+  lt = now; busy = true; setTimeout(() => busy = false, 200);
+
+  // Glove fires toward head
+  fireGlove(pt === 0 ? 'left' : 'right'); pt = 1 - pt;
+
+  // NPC shake
+  const npc = document.getElementById('npc');
+  npc.classList.remove('shk'); void npc.offsetWidth; npc.classList.add('shk');
+  setTimeout(() => npc.classList.remove('shk'), 350);
+  setFace('hit');
+
+  // Screen flash
+  const fl = document.getElementById('fl');
+  fl.style.opacity = '.28'; setTimeout(() => fl.style.opacity = '0', 110);
+
+  // Sound — harder hits sound stronger
+  const hitStrength = cb > 3 ? 1.4 : 1.0;
+  playHit(hitStrength);
+
+  // POW word near NPC head
+  const pw = document.getElementById('pw');
+  pw.textContent = PW[Math.floor(Math.random() * PW.length)];
+  const npcR = document.getElementById('hd').getBoundingClientRect();
+  const arR = document.getElementById('arena').getBoundingClientRect();
+  pw.style.left = Math.max(10, npcR.left - arR.left - 20 + Math.random() * 40) + 'px';
+  pw.style.top = Math.max(10, npcR.top - arR.top - 30) + 'px';
+  pw.classList.remove('pop'); void pw.offsetWidth; pw.classList.add('pop');
+
+  spawnStars();
+
+  const pts = 10 * cb; sc += pts; updHUD();
+  showPop('+' + pts + (cb > 1 ? ' ×' + cb : ''));
+
+  nHP--;
+  updHP();
+  if (nHP <= 0) {
+    setFace('ko');
+    setTimeout(doKO, 80);
+  } else {
+    setTimeout(() => setFace(nHP === 2 ? 'hurt' : 'bad'), 280);
+  }
+}
+
+function doKO() {
+  if (GST === 'ending' || GST === 'ended') return;
+  GST = 'ko';
+  koC++; sc += 50; updHUD();
+  document.getElementById('bub').classList.add('hide');
+  const npc = document.getElementById('npc');
+  npc.classList.remove('shk'); void npc.offsetWidth; npc.classList.add('ko');
+  const kb = document.getElementById('kobanner');
+  kb.classList.remove('go'); void kb.offsetWidth; kb.classList.add('go');
+  playKO();
+  for (let i = 0; i < 4; i++) setTimeout(spawnStars, i * 110);
+  setTimeout(() => showPop('K.O.! +50'), 150);
+
+  setTimeout(() => {
+    npc.className = ''; npc.style.opacity = '0'; npc.style.transform = '';
+    if (tLeft <= 0) { GST = 'ending'; return; }
+    setTimeout(() => {
+      const banner = document.createElement('div');
+      banner.className = 'nc-banner'; banner.textContent = '新挑戰者出現！';
+      document.getElementById('arena').appendChild(banner);
+      setTimeout(() => banner.remove(), 820);
+      playNewChallenger();
+      const side = Math.random() > .5 ? 'enr' : 'enl';
+      spawnNPC(side); GST = 'playing';
+    }, 200);
+  }, 760);
+}
+
+function showPop(txt) {
+  const ar = document.getElementById('arena');
+  const s = document.createElement('div');
+  s.className = 'scp'; s.textContent = txt;
+  s.style.left = (55 + Math.random() * 200) + 'px'; s.style.top = '24px';
+  ar.appendChild(s); setTimeout(() => s.remove(), 750);
+}
+
+function spawnStars() {
+  const ar = document.getElementById('arena'), nr = document.getElementById('npc');
+  if (!nr) return;
+  const arR = ar.getBoundingClientRect(), nrR = nr.getBoundingClientRect();
+  const cx = nrR.left - arR.left + nrR.width / 2, cy = nrR.top - arR.top + nrR.height / 2;
+  for (let i = 0; i < 9; i++) {
+    const s = document.createElement('div'); s.className = 'str';
+    s.style.cssText = `left:${cx}px;top:${cy}px;position:absolute;transition:all .6s ease-out`;
+    ar.appendChild(s);
+    const a = (i / 9) * Math.PI * 2, d = 38 + Math.random() * 30;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      s.style.left = (cx + Math.cos(a) * d) + 'px'; s.style.top = (cy + Math.sin(a) * d) + 'px';
+      s.style.opacity = '0'; s.style.transform = 'scale(0)';
+    }));
+    setTimeout(() => s.remove(), 650);
+  }
+}
+
+/* ─── Timer ─── */
+function tick() {
+  tLeft = Math.max(0, tLeft - 0.1);
+  const t = Math.ceil(tLeft);
+  const td = document.getElementById('td');
+  td.textContent = t; td.className = t <= 10 ? 'urg' : '';
+  document.getElementById('tb').style.width = (tLeft / 30 * 100) + '%';
+  if (t < prevSec && t <= 10 && t > 0) { playTickBeep(); prevSec = t; }
+  if (tLeft <= 0) { clearInterval(tIv); playTimeUp(); GST = 'ending'; setTimeout(endGame, 500); }
+}
+
+/* ─── Start / End / Reset ─── */
+function startGame() {
+  getAC(); // unlock audio context on user gesture
+  document.getElementById('ss').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('tbw').style.display = 'block';
+  document.getElementById('arena').style.display = 'flex';
+  document.getElementById('garea').style.display = 'block';
+  cOrder = shuffle([...Array(CHARS.length).keys()]);
+  cPos = 0; tLeft = 30; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; uQ = []; busy = false; prevSec = 30;
+  updHUD(); spawnNPC('enr'); GST = 'playing';
+  tIv = setInterval(tick, 100);
+}
+
+function endGame() {
+  clearInterval(tIv); GST = 'ended';
+  document.getElementById('eko').textContent = koC;
+  document.getElementById('esc').textContent = sc;
+  document.getElementById('ecb').textContent = maxCb;
+  let r = RATINGS[0];
+  for (const [k, title, sub] of RATINGS) if (koC >= k) r = [k, title, sub];
+  document.getElementById('rating').textContent = r[1] + ' — ' + r[2];
+  setTimeout(() => document.getElementById('es').classList.add('on'), 400);
+}
+
+function getTxt() {
+  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！ #扁AI語錄 #AI不會取代你`;
+}
+
+function shareX()     { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getTxt()), '_blank'); }
+function shareLine()  { window.open('https://social-plugins.line.me/lineit/share?text=' + encodeURIComponent(getTxt()), '_blank'); }
+function copyScore()  {
+  const btn = document.getElementById('cpbtn');
+  (navigator.clipboard ? navigator.clipboard.writeText(getTxt()) : Promise.reject())
+    .then(() => { btn.textContent = '已複製！'; setTimeout(() => btn.textContent = '複製成績', 2000); })
+    .catch(() => { btn.textContent = '已複製！'; setTimeout(() => btn.textContent = '複製成績', 2000); });
+}
+
+function resetGame(e) {
+  e.stopPropagation();
+  clearInterval(tIv);
+  document.getElementById('es').classList.remove('on');
+  tLeft = 30; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; uQ = []; busy = false; prevSec = 30;
+  cOrder = shuffle([...Array(CHARS.length).keys()]); cPos = 0;
+  document.getElementById('td').textContent = '30'; document.getElementById('td').className = '';
+  document.getElementById('tb').style.width = '100%';
+  updHUD(); spawnNPC('enr'); GST = 'playing';
+  tIv = setInterval(tick, 100);
+}
+</script>
+</body>
+</html>
