@@ -10,7 +10,7 @@
 
 ## 本機開啟
 
-直接用瀏覽器打開 [index.html](/home/frisk/punch_those_AI/index.html) 即可開始遊玩。
+直接用瀏覽器打開 [index.html](/punch_AI_prophet/blob/main/index.html) 即可開始遊玩。
 
 ## GitHub Pages 設定
 
