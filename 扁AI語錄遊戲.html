@@ -314,6 +314,7 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
 <script src="./vendor/qrcode.js"></script>
 <script>
 const LANG = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'zh';
+const BUILD_ID = '20260422c';
 const UI = {
   zh: {
     htmlLang: 'zh-TW',
@@ -1263,6 +1264,10 @@ function buildShareImageBlob() {
   ctx.font = '800 28px Arial, sans-serif';
   ctx.fillText('Punch AI Quotes', canvas.width / 2, 1642);
 
+  ctx.fillStyle = 'rgba(75,36,12,0.45)';
+  ctx.font = '700 16px Arial, sans-serif';
+  ctx.fillText(`build ${BUILD_ID}`, canvas.width / 2, 1678);
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
       if (!blob) {
@@ -1398,6 +1403,9 @@ function resetGame(e) {
   startGame(gameMode);
 }
 applyLanguage();
+document.documentElement.dataset.build = BUILD_ID;
+window.__PUNCH_AI_QUOTES_BUILD__ = BUILD_ID;
+console.info('[Punch AI Quotes] build', BUILD_ID);
 </script>
 </body>
 </html>
