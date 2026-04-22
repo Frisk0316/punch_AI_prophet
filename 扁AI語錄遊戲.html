@@ -311,7 +311,6 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
   </div>
 </div>
 
-<script src="./vendor/qrcode.js"></script>
 <script>
 const LANG = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'zh';
 const BUILD_ID = '20260422c';
@@ -352,9 +351,6 @@ const UI = {
     shareCardPill: '扁 AI 語錄 × 結算圖卡',
     shareCardIntro: '你的拳擊評級是：',
     shareCardMode: '30 秒限時拳擊挑戰',
-    shareCardUrlTitle: '立即開打',
-    shareCardUrlSub: '掃碼開啟挑戰頁面',
-    shareCardCta: '你也來試試！',
     shareCardFooter: '扁 AI 語錄',
     retry: '再挑戰一次！',
     stopRun: '結束本局',
@@ -402,9 +398,6 @@ const UI = {
     shareCardPill: 'Punch AI Quotes × Score Card',
     shareCardIntro: 'Your boxer rank is:',
     shareCardMode: '30-Second Beatdown',
-    shareCardUrlTitle: 'Play Now',
-    shareCardUrlSub: 'Scan to open the challenge',
-    shareCardCta: 'Can you beat this score?',
     shareCardFooter: 'Punch AI Quotes',
     retry: 'Fight Again',
     stopRun: 'End Run',
@@ -578,6 +571,15 @@ const RATINGS = [
 /* ─── State ─── */
 let GST='start',tLeft=30,sc=0,koC=0,cb=1,maxCb=1,nHP=3,lt=0,pt=0,tIv=null,cOrder=[],cPos=0,busy=false,prevSec=30,gameMode='timed';
 let shareCardBlob = null, shareCardFilename = '', shareCardPromise = null;
+let shareCardData = {
+  rating_zh: '',
+  rating_en: '',
+  ko_count: 0,
+  score: 0,
+  best_combo: 0,
+  comment_line_1: '',
+  comment_line_2: '',
+};
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function ui(key){return UI[LANG][key]}
@@ -851,6 +853,15 @@ function startGame(mode = 'timed') {
   shareCardBlob = null;
   shareCardFilename = '';
   shareCardPromise = null;
+  shareCardData = {
+    rating_zh: '',
+    rating_en: '',
+    ko_count: 0,
+    score: 0,
+    best_combo: 0,
+    comment_line_1: '',
+    comment_line_2: '',
+  };
   gameMode = mode;
   cOrder = shuffle([...Array(NPCS.length).keys()]);
   cPos = 0; tLeft = mode === 'timed' ? 30 : Infinity; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; busy = false; prevSec = 30;
@@ -872,6 +883,7 @@ function endGame() {
   let r = RATINGS[0];
   for (const rating of RATINGS) if (koC >= rating.min) r = rating;
   document.getElementById('rating').textContent = r.title[LANG] + ' — ' + r.sub[LANG];
+  shareCardData = getShareCardData();
   prepareShareCard();
   setTimeout(() => document.getElementById('es').classList.add('on'), 400);
 }
@@ -882,18 +894,11 @@ function getShareUrl() {
     : 'https://frisk0316.github.io/punch_AI_prophet/';
 }
 
-function getShareDisplayUrl() {
-  return LANG === 'en'
-    ? 'frisk0316.github.io/punch_AI_prophet/english.html'
-    : 'frisk0316.github.io/punch_AI_prophet/';
-}
-
 function getRatingSummary() {
-  const text = document.getElementById('rating').textContent;
-  const parts = text.split('—').map(part => part.trim()).filter(Boolean);
+  const current = getCurrentRating();
   return {
-    title: parts[0] || text.trim(),
-    sub: parts[1] || '',
+    title: current.title[LANG],
+    sub: current.sub[LANG],
   };
 }
 
@@ -919,6 +924,20 @@ function getShareCardLines() {
   else if (koC >= 5) line2 = '你的攻勢已經很成熟，連擊與收尾兼具，場上神棍幾乎沒有喘息空間。';
   else if (koC >= 3) line2 = '你的節奏感和壓制力都開始成形，再多幾拳就能把整場言論風向直接打翻。';
   return [line1, line2];
+}
+
+function getShareCardData() {
+  const rating = getCurrentRating();
+  const [commentLine1 = '', commentLine2 = ''] = getShareCardLines();
+  return {
+    rating_zh: rating.title.zh,
+    rating_en: rating.title.en,
+    ko_count: koC,
+    score: sc,
+    best_combo: maxCb,
+    comment_line_1: commentLine1,
+    comment_line_2: commentLine2,
+  };
 }
 
 function getTxt() {
@@ -947,6 +966,24 @@ function drawCenteredLines(ctx, lines, x, startY, lineHeight) {
 }
 
 function wrapTextLines(ctx, text, maxWidth) {
+  if (!text) return [''];
+  if (/\s/.test(text) && !/[\u3400-\u9fff]/.test(text)) {
+    const words = text.split(/\s+/);
+    const lines = [];
+    let current = '';
+    words.forEach(word => {
+      const next = current ? `${current} ${word}` : word;
+      if (current && ctx.measureText(next).width > maxWidth) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = next;
+      }
+    });
+    if (current) lines.push(current);
+    return lines;
+  }
+
   const chars = [...text];
   const lines = [];
   let current = '';
@@ -961,6 +998,41 @@ function wrapTextLines(ctx, text, maxWidth) {
   }
   if (current) lines.push(current);
   return lines;
+}
+
+function getShareFont(size, weight = 700, latinOnly = false) {
+  if (latinOnly) return `${weight} ${size}px "Arial Black", Arial, sans-serif`;
+  return LANG === 'en'
+    ? `${weight} ${size}px Arial, sans-serif`
+    : `${weight} ${size}px "Noto Sans TC", Arial, sans-serif`;
+}
+
+function fitTextSize(ctx, text, maxWidth, maxSize, minSize, fontFactory) {
+  for (let size = maxSize; size >= minSize; size -= 2) {
+    ctx.font = fontFactory(size);
+    if (ctx.measureText(text).width <= maxWidth) return size;
+  }
+  return minSize;
+}
+
+function getWrappedTextLayout(ctx, text, maxWidth, maxLines, maxSize, minSize, fontFactory) {
+  for (let size = maxSize; size >= minSize; size -= 2) {
+    ctx.font = fontFactory(size);
+    const lines = wrapTextLines(ctx, text, maxWidth);
+    if (lines.length <= maxLines) return {size, lines};
+  }
+
+  ctx.font = fontFactory(minSize);
+  const lines = wrapTextLines(ctx, text, maxWidth);
+  const trimmed = lines.slice(0, maxLines);
+  if (lines.length > maxLines && trimmed.length) {
+    let last = trimmed[trimmed.length - 1];
+    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    trimmed[trimmed.length - 1] = last + '…';
+  }
+  return {size: minSize, lines: trimmed};
 }
 
 function drawShareCharacter(ctx, x, y, scale = 1) {
@@ -1037,50 +1109,148 @@ function drawShareCharacter(ctx, x, y, scale = 1) {
   ctx.restore();
 }
 
+function drawShareCardHeader(ctx, canvas, data) {
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#E44A28';
+  roundRect(ctx, 356, 92, 488, 72, 30);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = getShareFont(28, 800);
+  ctx.fillText(ui('shareCardPill'), canvas.width / 2, 138);
+
+  ctx.fillStyle = '#4B240C';
+  ctx.font = getShareFont(62, 800);
+  ctx.fillText(ui('shareCardIntro'), canvas.width / 2, 242);
+
+  const ratingZhSize = fitTextSize(
+    ctx,
+    data.rating_zh,
+    820,
+    126,
+    82,
+    size => getShareFont(size, 900)
+  );
+  ctx.fillStyle = '#E64824';
+  ctx.font = getShareFont(ratingZhSize, 900);
+  ctx.fillText(data.rating_zh, canvas.width / 2, 390);
+
+  const ratingEnSize = fitTextSize(
+    ctx,
+    data.rating_en.toUpperCase(),
+    840,
+    60,
+    34,
+    size => getShareFont(size, 900, true)
+  );
+  ctx.fillStyle = '#EC9A2B';
+  ctx.font = getShareFont(ratingEnSize, 900, true);
+  ctx.fillText(data.rating_en.toUpperCase(), canvas.width / 2, 468);
+
+  ctx.strokeStyle = '#EC9A2B';
+  ctx.lineWidth = 8;
+  [
+    [188, 312, 124, 282],
+    [188, 350, 110, 350],
+    [188, 388, 124, 420],
+    [1012, 312, 1076, 282],
+    [1012, 350, 1090, 350],
+    [1012, 388, 1076, 420],
+  ].forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  });
+}
+
+function drawShareCardStats(ctx, stats, top) {
+  stats.forEach((stat, index) => {
+    const boxX = 114 + index * 324;
+    ctx.fillStyle = '#FFFDFC';
+    roundRect(ctx, boxX, top, 248, 170, 24);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#7A3D16';
+    ctx.stroke();
+
+    ctx.fillStyle = stat.color;
+    ctx.font = getShareFont(76, 900, true);
+    ctx.fillText(stat.value, boxX + 124, top + 94);
+
+    ctx.fillStyle = '#4B240C';
+    ctx.font = getShareFont(28, 800);
+    ctx.fillText(`${stat.icon} ${stat.label}`, boxX + 124, top + 144);
+  });
+}
+
+function drawShareCardComment(ctx, data, canvas, top) {
+  ctx.strokeStyle = '#A46E2B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(138, top);
+  ctx.lineTo(1062, top);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F8E46';
+  roundRect(ctx, 340, top + 30, 520, 68, 28);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = getShareFont(30, 900, true);
+  ctx.fillText(`★ ${ui('shareCardMode')} ★`, canvas.width / 2, top + 76);
+
+  ctx.fillStyle = '#FFF9F0';
+  roundRect(ctx, 136, top + 126, 928, 230, 30);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#E6C28A';
+  ctx.stroke();
+
+  const line1Layout = getWrappedTextLayout(
+    ctx,
+    data.comment_line_1,
+    800,
+    2,
+    LANG === 'en' ? 32 : 34,
+    22,
+    size => getShareFont(size, 700)
+  );
+  ctx.fillStyle = '#4B240C';
+  ctx.font = getShareFont(line1Layout.size, 700);
+  drawCenteredLines(ctx, line1Layout.lines, canvas.width / 2, top + 188, line1Layout.size + 16);
+
+  const line2Layout = getWrappedTextLayout(
+    ctx,
+    data.comment_line_2,
+    800,
+    3,
+    LANG === 'en' ? 30 : 32,
+    20,
+    size => getShareFont(size, 700)
+  );
+  ctx.font = getShareFont(line2Layout.size, 700);
+  const line2StartY = top + 188 + line1Layout.lines.length * (line1Layout.size + 16) + 34;
+  drawCenteredLines(ctx, line2Layout.lines, canvas.width / 2, line2StartY, line2Layout.size + 14);
+}
+
 function setShareButtonsBusy(isBusy) {
   ['dlbtn','twbtn','thbtn'].forEach(id => {
     document.getElementById(id).disabled = isBusy;
   });
 }
 
-function drawQrCode(ctx, text, x, y, size) {
-  if (typeof qrcode !== 'function') return;
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-
-  const count = qr.getModuleCount();
-  const cell = size / count;
-  ctx.fillStyle = '#FFFFFF';
-  roundRect(ctx, x - 16, y - 16, size + 32, size + 32, 18);
-  ctx.fill();
-
-  for (let row = 0; row < count; row++) {
-    for (let col = 0; col < count; col++) {
-      ctx.fillStyle = qr.isDark(row, col) ? '#2A1A0D' : '#FFFFFF';
-      const px = x + Math.round(col * cell);
-      const py = y + Math.round(row * cell);
-      const w = Math.ceil((col + 1) * cell) - Math.floor(col * cell);
-      const h = Math.ceil((row + 1) * cell) - Math.floor(row * cell);
-      ctx.fillRect(px, py, w, h);
-    }
-  }
-}
-
 function buildShareImageBlob() {
   const canvas = document.createElement('canvas');
   canvas.width = 1200;
-  canvas.height = 1700;
+  canvas.height = 1600;
   const ctx = canvas.getContext('2d');
-  const ratingDetail = getCurrentRating();
-  const rating = getRatingSummary();
-  const displayUrl = getShareDisplayUrl();
-  const shareUrl = getShareUrl();
-  const shareLines = getShareCardLines();
+  const data = shareCardData.rating_zh ? shareCardData : getShareCardData();
   const stats = [
-    {value: koC, label: ui('statKo')},
-    {value: sc, label: ui('statScore')},
-    {value: maxCb, label: ui('statCombo')},
+    {value: String(data.ko_count), label: ui('statKo'), icon: '🥊', color: '#E64824'},
+    {value: String(data.score), label: ui('statScore'), icon: '🏆', color: '#F09C21'},
+    {value: `x${data.best_combo}`, label: ui('statCombo'), icon: '⚡', color: '#4A8F46'},
   ];
 
   ctx.fillStyle = '#FFF7E8';
@@ -1096,64 +1266,26 @@ function buildShareImageBlob() {
   ctx.beginPath();
   ctx.arc(86, 96, 74, 0, Math.PI * 2);
   ctx.arc(1124, 126, 128, 0, Math.PI * 2);
-  ctx.arc(86, 1422, 128, 0, Math.PI * 2);
+  ctx.arc(86, 1340, 128, 0, Math.PI * 2);
+  ctx.arc(1090, 1480, 104, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#FFFDFC';
-  roundRect(ctx, 62, 34, 1076, 1424, 42);
+  roundRect(ctx, 62, 34, 1076, 1518, 42);
   ctx.fill();
   ctx.lineWidth = 4;
   ctx.strokeStyle = '#6A3312';
   ctx.stroke();
 
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#E44A28';
-  roundRect(ctx, 372, 86, 456, 74, 30);
-  ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = LANG === 'en' ? '800 28px Arial, sans-serif' : '800 28px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardPill'), canvas.width / 2, 134);
-
-  ctx.fillStyle = '#4B240C';
-  ctx.font = LANG === 'en' ? '700 64px Arial, sans-serif' : '700 66px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardIntro'), canvas.width / 2, 246);
-
-  ctx.fillStyle = '#E64824';
-  ctx.font = LANG === 'en' ? '900 118px "Arial Black", Arial, sans-serif' : '900 128px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(ratingDetail.title[LANG], canvas.width / 2, 390);
-
-  ctx.fillStyle = '#EC9A2B';
-  ctx.font = LANG === 'en' ? '900 58px "Arial Black", Arial, sans-serif' : '900 60px Arial, sans-serif';
-  ctx.fillText(LANG === 'en' ? ratingDetail.title.zh.toUpperCase() : ratingDetail.title.en.toUpperCase(), canvas.width / 2, 484);
-
-  ctx.strokeStyle = '#EC9A2B';
-  ctx.lineWidth = 8;
-  [
-    [174, 314, 118, 286],
-    [174, 350, 106, 350],
-    [174, 386, 118, 414],
-    [1026, 314, 1082, 286],
-    [1026, 350, 1094, 350],
-    [1026, 386, 1082, 414],
-  ].forEach(([x1, y1, x2, y2]) => {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  });
-
-  ctx.fillStyle = '#EC9A2B';
-  ctx.font = '900 56px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', 278, 490);
-  ctx.fillText('★', 922, 490);
+  drawShareCardHeader(ctx, canvas, data);
 
   ctx.strokeStyle = '#F5B33B';
   ctx.lineWidth = 5;
   [
-    [366, 636, 286, 572],
-    [420, 686, 320, 754],
-    [766, 642, 832, 552],
-    [816, 694, 914, 746],
+    [366, 620, 286, 562],
+    [426, 682, 322, 742],
+    [780, 632, 844, 550],
+    [826, 684, 920, 742],
   ].forEach(([x1, y1, x2, y2]) => {
     ctx.beginPath();
     ctx.moveTo(x1, y1);
@@ -1163,110 +1295,47 @@ function buildShareImageBlob() {
 
   ctx.fillStyle = '#E94C25';
   ctx.font = '900 64px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', 812, 646);
+  ctx.fillText('★', 812, 638);
   ctx.fillStyle = '#FFB23D';
   ctx.font = '900 42px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', 742, 922);
-  ctx.fillText('★', 354, 894);
+  ctx.fillText('★', 750, 870);
+  ctx.fillText('★', 356, 852);
 
-  drawShareCharacter(ctx, 442, 716, 2.82);
+  drawShareCharacter(ctx, 470, 522, 2.52);
 
-  stats.forEach((stat, index) => {
-    const boxX = 120 + index * 320;
-    ctx.fillStyle = '#FFFDFC';
-    roundRect(ctx, boxX, 932, 240, 168, 24);
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#7A3D16';
-    ctx.stroke();
-
-    const valueColor = index === 0 ? '#E64824' : index === 1 ? '#F09C21' : '#4A8F46';
-    ctx.fillStyle = valueColor;
-    ctx.font = '900 78px "Arial Black", Arial, sans-serif';
-    ctx.fillText(index === 2 ? `x${stat.value}` : String(stat.value), boxX + 120, 1026);
-
-    ctx.fillStyle = '#4B240C';
-    ctx.font = LANG === 'en' ? '800 24px Arial, sans-serif' : '800 26px "Noto Sans TC", Arial, sans-serif';
-    const icon = index === 0 ? '🥊' : index === 1 ? '🏆' : '⚡';
-    ctx.fillText(`${icon} ${stat.label}`, boxX + 120, 1100);
-  });
-
-  ctx.strokeStyle = '#7A3D16';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(138, 1144);
-  ctx.lineTo(510, 1144);
-  ctx.moveTo(690, 1144);
-  ctx.lineTo(1062, 1144);
-  ctx.stroke();
-
-  ctx.fillStyle = '#A46E2B';
-  ctx.font = '900 34px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', canvas.width / 2, 1156);
-
-  ctx.fillStyle = '#4F8E46';
-  roundRect(ctx, 362, 1180, 476, 70, 28);
-  ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = LANG === 'en' ? '900 30px "Arial Black", Arial, sans-serif' : '900 30px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(`★ ${ui('shareCardMode')} ★`, canvas.width / 2, 1226);
-
-  ctx.fillStyle = '#4B240C';
-  ctx.font = LANG === 'en' ? '700 32px Arial, sans-serif' : '700 32px "Noto Sans TC", Arial, sans-serif';
-  const wrappedCopy = [...wrapTextLines(ctx, shareLines[0], 860), ...wrapTextLines(ctx, shareLines[1], 860)];
-  drawCenteredLines(ctx, wrappedCopy.slice(0, 4), canvas.width / 2, 1308, 48);
-
-  ctx.strokeStyle = '#7A3D16';
-  ctx.beginPath();
-  ctx.moveTo(138, 1412);
-  ctx.lineTo(1062, 1412);
-  ctx.stroke();
-
-  drawQrCode(ctx, shareUrl, 250, 1440, 118);
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#E64824';
-  ctx.font = LANG === 'en' ? '900 70px "Arial Black", Arial, sans-serif' : '900 72px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(ui('shareCardUrlTitle'), 430, 1508);
-
-  ctx.fillStyle = '#4B240C';
-  ctx.font = '700 24px Arial, sans-serif';
-  ctx.fillText(displayUrl, 430, 1552);
-
-  ctx.fillStyle = '#6B6B6B';
-  ctx.font = LANG === 'en' ? '700 22px Arial, sans-serif' : '700 22px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardUrlSub'), 430, 1588);
   ctx.textAlign = 'center';
+  drawShareCardStats(ctx, stats, 930);
+  drawShareCardComment(ctx, data, canvas, 1146);
 
   ctx.strokeStyle = '#A46E2B';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(142, 1640);
-  ctx.lineTo(316, 1640);
-  ctx.moveTo(884, 1640);
-  ctx.lineTo(1058, 1640);
+  ctx.moveTo(136, 1510);
+  ctx.lineTo(308, 1510);
+  ctx.moveTo(892, 1510);
+  ctx.lineTo(1064, 1510);
   ctx.stroke();
 
   ctx.fillStyle = '#F5B33B';
   ctx.font = '900 44px "Arial Black", Arial, sans-serif';
-  ctx.fillText('•', 360, 1648);
-  ctx.fillText('•', 840, 1648);
-  ctx.fillText('★', 408, 1648);
-  ctx.fillText('★', 792, 1648);
+  ctx.fillText('•', 352, 1518);
+  ctx.fillText('•', 848, 1518);
+  ctx.fillText('★', 402, 1518);
+  ctx.fillText('★', 798, 1518);
 
   ctx.fillStyle = '#FFFDFC';
-  roundRect(ctx, 418, 1600, 364, 64, 26);
+  roundRect(ctx, 400, 1472, 400, 64, 26);
   ctx.fill();
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#7A3D16';
   ctx.stroke();
   ctx.fillStyle = '#4B240C';
-  ctx.font = '800 28px Arial, sans-serif';
-  ctx.fillText('Punch AI Quotes', canvas.width / 2, 1642);
+  ctx.font = getShareFont(28, 800);
+  ctx.fillText(ui('shareCardFooter'), canvas.width / 2, 1514);
 
   ctx.fillStyle = 'rgba(75,36,12,0.45)';
   ctx.font = '700 16px Arial, sans-serif';
-  ctx.fillText(`build ${BUILD_ID}`, canvas.width / 2, 1678);
+  ctx.fillText(`build ${BUILD_ID}`, canvas.width / 2, 1552);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
