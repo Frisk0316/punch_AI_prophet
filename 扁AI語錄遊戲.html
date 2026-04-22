@@ -348,11 +348,11 @@ const UI = {
     shareThreads: 'Threads',
     sharePreparing: '製作 JPG 中…',
     shareReady: 'JPG 已就緒',
-    shareCardPill: '扁 AI 語錄',
+    shareCardPill: '扁 AI 語錄 × 結算圖卡',
     shareCardIntro: '你的拳擊評級是：',
+    shareCardMode: '30 秒限時拳擊挑戰',
     shareCardUrlTitle: '立即開打',
     shareCardUrlSub: '掃碼開啟挑戰頁面',
-    shareCardHeader: '30 秒限時拳擊挑戰',
     shareCardCta: '你也來試試！',
     shareCardFooter: '扁 AI 語錄',
     retry: '再挑戰一次！',
@@ -398,11 +398,11 @@ const UI = {
     shareThreads: 'Threads',
     sharePreparing: 'Building JPG...',
     shareReady: 'JPG ready',
-    shareCardPill: 'Punch AI Quotes',
+    shareCardPill: 'Punch AI Quotes × Score Card',
     shareCardIntro: 'Your boxer rank is:',
+    shareCardMode: '30-Second Beatdown',
     shareCardUrlTitle: 'Play Now',
     shareCardUrlSub: 'Scan to open the challenge',
-    shareCardHeader: '30-Second Beatdown',
     shareCardCta: 'Can you beat this score?',
     shareCardFooter: 'Punch AI Quotes',
     retry: 'Fight Again',
@@ -896,6 +896,30 @@ function getRatingSummary() {
   };
 }
 
+function getCurrentRating() {
+  let current = RATINGS[0];
+  for (const rating of RATINGS) if (koC >= rating.min) current = rating;
+  return current;
+}
+
+function getShareCardLines() {
+  if (LANG === 'en') {
+    const line1 = `You landed ${koC} KOs in 30 seconds and stacked ${sc} points with a best combo of x${maxCb}.`;
+    let line2 = 'A clean, composed run that hits back hard against every smug AI replacement take.';
+    if (koC >= 8) line2 = 'An outrageous performance that turned every AI doompost into confetti.';
+    else if (koC >= 5) line2 = 'A sharp, aggressive run with real finishing power and combo control.';
+    else if (koC >= 3) line2 = 'A solid rhythm with good pressure, good timing, and growing knockout instinct.';
+    return [line1, line2];
+  }
+
+  const line1 = `你在 30 秒內打出 ${koC} 次 KO、累積 ${sc} 分，最高連擊來到 x${maxCb}。`;
+  let line2 = '出拳節奏穩、反應俐落，已經很有把滿口 AI 幹話一拳打散的氣勢。';
+  if (koC >= 8) line2 = '你像是把 AI 預言家一個個拖上擂台清場，出拳又狠又準，完全是終結者等級。';
+  else if (koC >= 5) line2 = '你的攻勢已經很成熟，連擊與收尾兼具，場上神棍幾乎沒有喘息空間。';
+  else if (koC >= 3) line2 = '你的節奏感和壓制力都開始成形，再多幾拳就能把整場言論風向直接打翻。';
+  return [line1, line2];
+}
+
 function getTxt() {
   const rating = getRatingSummary();
   if (LANG === 'en') {
@@ -1045,124 +1069,199 @@ function drawQrCode(ctx, text, x, y, size) {
 function buildShareImageBlob() {
   const canvas = document.createElement('canvas');
   canvas.width = 1200;
-  canvas.height = 1500;
+  canvas.height = 1700;
   const ctx = canvas.getContext('2d');
+  const ratingDetail = getCurrentRating();
   const rating = getRatingSummary();
   const displayUrl = getShareDisplayUrl();
   const shareUrl = getShareUrl();
+  const shareLines = getShareCardLines();
   const stats = [
     {value: koC, label: ui('statKo')},
     {value: sc, label: ui('statScore')},
     {value: maxCb, label: ui('statCombo')},
   ];
 
-  ctx.fillStyle = '#EFF8F1';
+  ctx.fillStyle = '#FFF7E8';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  bg.addColorStop(0, '#F4FBF5');
-  bg.addColorStop(1, '#F9F5E7');
+  bg.addColorStop(0, '#FFF9EB');
+  bg.addColorStop(1, '#FFF3DD');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = 'rgba(198,226,205,0.42)';
+  ctx.fillStyle = 'rgba(255,214,152,0.24)';
   ctx.beginPath();
-  ctx.arc(118, 168, 118, 0, Math.PI * 2);
-  ctx.arc(1098, 128, 146, 0, Math.PI * 2);
-  ctx.arc(88, 1410, 156, 0, Math.PI * 2);
+  ctx.arc(86, 96, 74, 0, Math.PI * 2);
+  ctx.arc(1124, 126, 128, 0, Math.PI * 2);
+  ctx.arc(86, 1422, 128, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#FFFDFC';
-  roundRect(ctx, 62, 58, 1076, 1378, 36);
+  roundRect(ctx, 62, 34, 1076, 1424, 42);
   ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(105,131,107,0.18)';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#6A3312';
   ctx.stroke();
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#E8F3E8';
-  roundRect(ctx, 466, 116, 268, 72, 26);
+  ctx.fillStyle = '#E44A28';
+  roundRect(ctx, 372, 86, 456, 74, 30);
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(98,131,102,0.18)';
-  ctx.stroke();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = LANG === 'en' ? '800 28px Arial, sans-serif' : '800 28px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(ui('shareCardPill'), canvas.width / 2, 134);
 
-  ctx.fillStyle = '#536A55';
-  ctx.font = LANG === 'en' ? '800 26px Arial, sans-serif' : '800 28px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardPill'), canvas.width / 2, 161);
+  ctx.fillStyle = '#4B240C';
+  ctx.font = LANG === 'en' ? '700 64px Arial, sans-serif' : '700 66px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(ui('shareCardIntro'), canvas.width / 2, 246);
 
-  ctx.fillStyle = '#383838';
-  ctx.font = LANG === 'en' ? '700 56px Arial, sans-serif' : '700 58px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardIntro'), canvas.width / 2, 286);
+  ctx.fillStyle = '#E64824';
+  ctx.font = LANG === 'en' ? '900 118px "Arial Black", Arial, sans-serif' : '900 128px "Noto Sans TC", "Arial Black", Arial, sans-serif';
+  ctx.fillText(ratingDetail.title[LANG], canvas.width / 2, 390);
 
-  ctx.fillStyle = '#1F1F1F';
-  ctx.font = LANG === 'en' ? '900 108px "Arial Black", Arial, sans-serif' : '900 114px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(rating.title, canvas.width / 2, 404);
+  ctx.fillStyle = '#EC9A2B';
+  ctx.font = LANG === 'en' ? '900 58px "Arial Black", Arial, sans-serif' : '900 60px Arial, sans-serif';
+  ctx.fillText(LANG === 'en' ? ratingDetail.title.zh.toUpperCase() : ratingDetail.title.en.toUpperCase(), canvas.width / 2, 484);
 
-  ctx.fillStyle = '#4E9B3D';
-  ctx.font = LANG === 'en' ? '900 76px "Arial Black", Arial, sans-serif' : '900 82px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(ui('shareCardFooter'), canvas.width / 2, 498);
-
-  drawShareCharacter(ctx, 441, 714, 2.82);
-
-  ctx.fillStyle = '#FFF5D8';
-  roundRect(ctx, 430, 926, 340, 74, 26);
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(155,123,49,0.2)';
-  ctx.stroke();
-
-  ctx.fillStyle = '#637167';
-  ctx.font = LANG === 'en' ? '700 28px Arial, sans-serif' : '700 30px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(`${ui('statKo')} ${koC} ・ ${ui('statScore')} ${sc} ・ ${ui('statCombo')} x${maxCb}`, canvas.width / 2, 973);
-
-  if (rating.sub) {
-    ctx.fillStyle = '#6A6A6A';
-    ctx.font = LANG === 'en' ? '700 36px Arial, sans-serif' : '700 38px "Noto Sans TC", Arial, sans-serif';
-    ctx.fillText(rating.sub, canvas.width / 2, 1058);
-  }
-
-  stats.forEach((stat, index) => {
-    const boxX = 102 + index * 332;
-    ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, boxX, 1108, 260, 196, 28);
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#E7E7E7';
+  ctx.strokeStyle = '#EC9A2B';
+  ctx.lineWidth = 8;
+  [
+    [174, 314, 118, 286],
+    [174, 350, 106, 350],
+    [174, 386, 118, 414],
+    [1026, 314, 1082, 286],
+    [1026, 350, 1094, 350],
+    [1026, 386, 1082, 414],
+  ].forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
     ctx.stroke();
-
-    ctx.fillStyle = stat.value === sc ? '#27A55A' : '#E36A32';
-    ctx.font = '900 74px "Arial Black", Arial, sans-serif';
-    ctx.fillText(String(stat.value), boxX + 130, 1198);
-
-    ctx.fillStyle = '#6E6E6E';
-    ctx.font = LANG === 'en' ? '700 28px Arial, sans-serif' : '700 30px "Noto Sans TC", Arial, sans-serif';
-    const labelLines = wrapTextLines(ctx, stat.label, 190);
-    drawCenteredLines(ctx, labelLines, boxX + 130, 1252, 34);
   });
 
-  ctx.strokeStyle = '#E7E7E7';
+  ctx.fillStyle = '#EC9A2B';
+  ctx.font = '900 56px "Arial Black", Arial, sans-serif';
+  ctx.fillText('★', 278, 490);
+  ctx.fillText('★', 922, 490);
+
+  ctx.strokeStyle = '#F5B33B';
+  ctx.lineWidth = 5;
+  [
+    [366, 636, 286, 572],
+    [420, 686, 320, 754],
+    [766, 642, 832, 552],
+    [816, 694, 914, 746],
+  ].forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = '#E94C25';
+  ctx.font = '900 64px "Arial Black", Arial, sans-serif';
+  ctx.fillText('★', 812, 646);
+  ctx.fillStyle = '#FFB23D';
+  ctx.font = '900 42px "Arial Black", Arial, sans-serif';
+  ctx.fillText('★', 742, 922);
+  ctx.fillText('★', 354, 894);
+
+  drawShareCharacter(ctx, 442, 716, 2.82);
+
+  stats.forEach((stat, index) => {
+    const boxX = 120 + index * 320;
+    ctx.fillStyle = '#FFFDFC';
+    roundRect(ctx, boxX, 932, 240, 168, 24);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#7A3D16';
+    ctx.stroke();
+
+    const valueColor = index === 0 ? '#E64824' : index === 1 ? '#F09C21' : '#4A8F46';
+    ctx.fillStyle = valueColor;
+    ctx.font = '900 78px "Arial Black", Arial, sans-serif';
+    ctx.fillText(index === 2 ? `x${stat.value}` : String(stat.value), boxX + 120, 1026);
+
+    ctx.fillStyle = '#4B240C';
+    ctx.font = LANG === 'en' ? '800 24px Arial, sans-serif' : '800 26px "Noto Sans TC", Arial, sans-serif';
+    const icon = index === 0 ? '🥊' : index === 1 ? '🏆' : '⚡';
+    ctx.fillText(`${icon} ${stat.label}`, boxX + 120, 1100);
+  });
+
+  ctx.strokeStyle = '#7A3D16';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(144, 1332);
-  ctx.lineTo(1056, 1332);
+  ctx.moveTo(138, 1144);
+  ctx.lineTo(510, 1144);
+  ctx.moveTo(690, 1144);
+  ctx.lineTo(1062, 1144);
   ctx.stroke();
 
-  drawQrCode(ctx, shareUrl, 340, 1356, 104);
+  ctx.fillStyle = '#A46E2B';
+  ctx.font = '900 34px "Arial Black", Arial, sans-serif';
+  ctx.fillText('★', canvas.width / 2, 1156);
 
-  ctx.fillStyle = '#335C39';
+  ctx.fillStyle = '#4F8E46';
+  roundRect(ctx, 362, 1180, 476, 70, 28);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = LANG === 'en' ? '900 30px "Arial Black", Arial, sans-serif' : '900 30px "Noto Sans TC", "Arial Black", Arial, sans-serif';
+  ctx.fillText(`★ ${ui('shareCardMode')} ★`, canvas.width / 2, 1226);
+
+  ctx.fillStyle = '#4B240C';
+  ctx.font = LANG === 'en' ? '700 32px Arial, sans-serif' : '700 32px "Noto Sans TC", Arial, sans-serif';
+  const wrappedCopy = [...wrapTextLines(ctx, shareLines[0], 860), ...wrapTextLines(ctx, shareLines[1], 860)];
+  drawCenteredLines(ctx, wrappedCopy.slice(0, 4), canvas.width / 2, 1308, 48);
+
+  ctx.strokeStyle = '#7A3D16';
+  ctx.beginPath();
+  ctx.moveTo(138, 1412);
+  ctx.lineTo(1062, 1412);
+  ctx.stroke();
+
+  drawQrCode(ctx, shareUrl, 250, 1440, 118);
+
   ctx.textAlign = 'left';
-  ctx.font = LANG === 'en' ? '900 42px "Arial Black", Arial, sans-serif' : '900 44px "Noto Sans TC", "Arial Black", Arial, sans-serif';
-  ctx.fillText(ui('shareCardUrlTitle'), 498, 1404);
+  ctx.fillStyle = '#E64824';
+  ctx.font = LANG === 'en' ? '900 70px "Arial Black", Arial, sans-serif' : '900 72px "Noto Sans TC", "Arial Black", Arial, sans-serif';
+  ctx.fillText(ui('shareCardUrlTitle'), 430, 1508);
 
-  ctx.fillStyle = '#718174';
+  ctx.fillStyle = '#4B240C';
   ctx.font = '700 24px Arial, sans-serif';
-  ctx.fillText(displayUrl, 498, 1442);
+  ctx.fillText(displayUrl, 430, 1552);
 
-  ctx.fillStyle = '#7D8B80';
-  ctx.font = LANG === 'en' ? '700 24px Arial, sans-serif' : '700 24px "Noto Sans TC", Arial, sans-serif';
-  ctx.fillText(ui('shareCardUrlSub'), 498, 1478);
+  ctx.fillStyle = '#6B6B6B';
+  ctx.font = LANG === 'en' ? '700 22px Arial, sans-serif' : '700 22px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(ui('shareCardUrlSub'), 430, 1588);
   ctx.textAlign = 'center';
+
+  ctx.strokeStyle = '#A46E2B';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(142, 1640);
+  ctx.lineTo(316, 1640);
+  ctx.moveTo(884, 1640);
+  ctx.lineTo(1058, 1640);
+  ctx.stroke();
+
+  ctx.fillStyle = '#F5B33B';
+  ctx.font = '900 44px "Arial Black", Arial, sans-serif';
+  ctx.fillText('•', 360, 1648);
+  ctx.fillText('•', 840, 1648);
+  ctx.fillText('★', 408, 1648);
+  ctx.fillText('★', 792, 1648);
+
+  ctx.fillStyle = '#FFFDFC';
+  roundRect(ctx, 418, 1600, 364, 64, 26);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#7A3D16';
+  ctx.stroke();
+  ctx.fillStyle = '#4B240C';
+  ctx.font = '800 28px Arial, sans-serif';
+  ctx.fillText('Punch AI Quotes', canvas.width / 2, 1642);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
