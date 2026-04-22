@@ -948,24 +948,98 @@ function getTxt() {
   return `我在《扁 AI 語錄》打出 ${sc} 分，KO ${koC} 個 AI 神棍，最高連擊 x${maxCb}！\n評級：${rating.title}\n你也來試試：${getShareUrl()}\n${ui('hashtags')}`;
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
+const SHARE_CARD_TEMPLATE_CONFIG = {
+  zh: {
+    sources: ['./assets/result-card-template-zh.png', './Result.png'],
+    drawFixedText: true,
+    fixedText: {
+      topPillText: '扁 AI 語錄 × 結算圖卡',
+      heading: '你的拳擊評級是：',
+      koLabel: 'KO 人數',
+      scoreLabel: '總得分',
+      comboLabel: '最高連擊',
+      modeText: '30 秒限時拳擊挑戰',
+      footerText: '扁 AI 語錄',
+    },
+  },
+  en: {
+    sources: ['./assets/result-card-template-en.png', './Result.png'],
+    drawFixedText: true,
+    fixedText: {
+      topPillText: 'Punch AI Quotes × Score Card',
+      heading: 'Your boxer rank is:',
+      koLabel: 'KOs',
+      scoreLabel: 'Score',
+      comboLabel: 'Best Combo',
+      modeText: '30-Second Beatdown',
+      footerText: 'Punch AI Quotes',
+    },
+  },
+};
+
+const SHARE_CARD_LAYOUT = {
+  canvasWidth: 1086,
+  canvasHeight: 1448,
+  topPillText: {x: 543, y: 104, maxWidth: 420, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#FFFFFF'},
+  heading: {x: 543, y: 198, maxWidth: 680, maxFontSize: 56, minFontSize: 28, weight: 800, fillStyle: '#4B240C'},
+  ratingZh: {x: 543, y: 304, maxWidth: 700, maxFontSize: 90, minFontSize: 40, weight: 900, fillStyle: '#E64824'},
+  ratingEn: {x: 543, y: 407, maxWidth: 720, maxFontSize: 48, minFontSize: 24, weight: 900, fillStyle: '#EC9A2B', latinOnly: true},
+  koCount: {x: 212, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#E64824', latinOnly: true},
+  score: {x: 543, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#EC9A2B', latinOnly: true},
+  bestCombo: {x: 874, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#4A8F46', latinOnly: true},
+  koLabel: {x: 212, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  scoreLabel: {x: 543, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  comboLabel: {x: 874, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  modeText: {x: 543, y: 1070, maxWidth: 430, maxFontSize: 28, minFontSize: 16, weight: 900, fillStyle: '#FFFFFF', latinOnly: true},
+  commentLine1: {x: 543, y: 1210, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
+  commentLine2: {x: 543, y: 1310, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
+  footerText: {x: 543, y: 1400, maxWidth: 320, maxFontSize: 26, minFontSize: 14, weight: 800, fillStyle: '#4B240C'},
+};
+
+function getShareFont(size, weight = 700, latinOnly = false) {
+  if (latinOnly) return `${weight} ${size}px "Arial Black", Arial, sans-serif`;
+  return `${weight} ${size}px "Noto Sans TC", Arial, sans-serif`;
 }
 
-function drawCenteredLines(ctx, lines, x, startY, lineHeight) {
-  lines.forEach((line, index) => {
-    ctx.fillText(line, x, startY + index * lineHeight);
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
   });
 }
 
-function wrapTextLines(ctx, text, maxWidth) {
+async function loadShareCardTemplate(lang = LANG) {
+  const config = SHARE_CARD_TEMPLATE_CONFIG[lang] || SHARE_CARD_TEMPLATE_CONFIG.zh;
+  let lastError = null;
+  for (const src of config.sources) {
+    try {
+      const image = await loadImage(src);
+      return {image, config, src};
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('Failed to load share card template.');
+}
+
+function fitText(ctx, text, {
+  maxWidth,
+  maxFontSize,
+  minFontSize,
+  fontFactory,
+}) {
+  const safeText = text == null ? '' : String(text);
+  for (let size = maxFontSize; size >= minFontSize; size -= 2) {
+    ctx.font = fontFactory(size);
+    if (ctx.measureText(safeText).width <= maxWidth) return size;
+  }
+  return minFontSize;
+}
+
+function wrapText(ctx, text, maxWidth) {
   if (!text) return [''];
   if (/\s/.test(text) && !/[\u3400-\u9fff]/.test(text)) {
     const words = text.split(/\s+/);
@@ -987,7 +1061,7 @@ function wrapTextLines(ctx, text, maxWidth) {
   const chars = [...text];
   const lines = [];
   let current = '';
-  for (const ch of chars) {
+  chars.forEach(ch => {
     const next = current + ch;
     if (current && ctx.measureText(next).width > maxWidth) {
       lines.push(current);
@@ -995,244 +1069,121 @@ function wrapTextLines(ctx, text, maxWidth) {
     } else {
       current = next;
     }
-  }
+  });
   if (current) lines.push(current);
   return lines;
 }
 
-function getShareFont(size, weight = 700, latinOnly = false) {
-  if (latinOnly) return `${weight} ${size}px "Arial Black", Arial, sans-serif`;
-  return LANG === 'en'
-    ? `${weight} ${size}px Arial, sans-serif`
-    : `${weight} ${size}px "Noto Sans TC", Arial, sans-serif`;
-}
-
-function fitTextSize(ctx, text, maxWidth, maxSize, minSize, fontFactory) {
-  for (let size = maxSize; size >= minSize; size -= 2) {
-    ctx.font = fontFactory(size);
-    if (ctx.measureText(text).width <= maxWidth) return size;
-  }
-  return minSize;
-}
-
-function getWrappedTextLayout(ctx, text, maxWidth, maxLines, maxSize, minSize, fontFactory) {
-  for (let size = maxSize; size >= minSize; size -= 2) {
-    ctx.font = fontFactory(size);
-    const lines = wrapTextLines(ctx, text, maxWidth);
-    if (lines.length <= maxLines) return {size, lines};
-  }
-
-  ctx.font = fontFactory(minSize);
-  const lines = wrapTextLines(ctx, text, maxWidth);
-  const trimmed = lines.slice(0, maxLines);
-  if (lines.length > maxLines && trimmed.length) {
-    let last = trimmed[trimmed.length - 1];
-    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) {
-      last = last.slice(0, -1);
-    }
-    trimmed[trimmed.length - 1] = last + '…';
-  }
-  return {size: minSize, lines: trimmed};
-}
-
-function drawShareCharacter(ctx, x, y, scale = 1) {
-  const stroke = '#3D1F08';
-  const skin = '#F5C4A0';
-  const suit = '#5A3A1A';
-  const tie = '#1D9E75';
-  const line = 6 * scale;
-
+function drawCenteredText(ctx, text, x, y, {
+  maxWidth,
+  maxFontSize,
+  minFontSize,
+  weight = 700,
+  latinOnly = false,
+  fillStyle = '#4B240C',
+} = {}) {
+  const fontFactory = size => getShareFont(size, weight, latinOnly);
+  const fontSize = fitText(ctx, text, {
+    maxWidth,
+    maxFontSize,
+    minFontSize,
+    fontFactory,
+  });
   ctx.save();
-  ctx.translate(x, y);
-  ctx.lineWidth = line;
-  ctx.strokeStyle = stroke;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
+  ctx.font = fontFactory(fontSize);
+  ctx.fillStyle = fillStyle;
+  ctx.fillText(String(text ?? ''), x, y);
+  ctx.restore();
+  return fontSize;
+}
 
-  ctx.fillStyle = '#E24B4A';
-  [0, 32, 64].forEach(offset => {
-    ctx.beginPath();
-    ctx.arc(offset, -80 * scale, 12 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+function getWrappedTextLayout(ctx, text, {
+  maxWidth,
+  maxLines,
+  maxFontSize,
+  minFontSize,
+  weight = 700,
+  latinOnly = false,
+}) {
+  const fontFactory = size => getShareFont(size, weight, latinOnly);
+  for (let size = maxFontSize; size >= minFontSize; size -= 2) {
+    ctx.font = fontFactory(size);
+    const lines = wrapText(ctx, text, maxWidth);
+    if (lines.length <= maxLines) return {fontSize: size, lines};
+  }
+
+  ctx.font = fontFactory(minFontSize);
+  const lines = wrapText(ctx, text, maxWidth).slice(0, maxLines);
+  if (lines.length) {
+    let lastLine = lines[lines.length - 1];
+    while (lastLine.length > 1 && ctx.measureText(lastLine + '…').width > maxWidth) {
+      lastLine = lastLine.slice(0, -1);
+    }
+    lines[lines.length - 1] = lastLine + (lastLine.endsWith('…') ? '' : '…');
+  }
+  return {fontSize: minFontSize, lines};
+}
+
+function scaleLayout(layout, width, height) {
+  const scaleX = width / layout.canvasWidth;
+  const scaleY = height / layout.canvasHeight;
+  const fontScale = Math.min(scaleX, scaleY);
+  const scaled = {canvasWidth: width, canvasHeight: height};
+
+  Object.entries(layout).forEach(([key, value]) => {
+    if (!value || typeof value !== 'object' || key === 'canvasWidth' || key === 'canvasHeight') return;
+    scaled[key] = {
+      ...value,
+      x: value.x * scaleX,
+      y: value.y * scaleY,
+      maxWidth: value.maxWidth ? value.maxWidth * scaleX : value.maxWidth,
+      maxFontSize: value.maxFontSize ? value.maxFontSize * fontScale : value.maxFontSize,
+      minFontSize: value.minFontSize ? value.minFontSize * fontScale : value.minFontSize,
+    };
   });
 
-  ctx.fillStyle = skin;
-  ctx.fillRect(-54 * scale, -12 * scale, 30 * scale, 42 * scale);
-  ctx.fillRect(58 * scale, -12 * scale, 30 * scale, 42 * scale);
-  ctx.strokeRect(-54 * scale, -12 * scale, 30 * scale, 42 * scale);
-  ctx.strokeRect(58 * scale, -12 * scale, 30 * scale, 42 * scale);
+  return scaled;
+}
 
-  ctx.beginPath();
-  ctx.arc(32 * scale, 0, 56 * scale, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = stroke;
-  ctx.beginPath();
-  ctx.arc(4 * scale, -2 * scale, 7 * scale, 0, Math.PI * 2);
-  ctx.arc(60 * scale, -2 * scale, 7 * scale, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.lineWidth = 5 * scale;
-  ctx.arc(32 * scale, 14 * scale, 18 * scale, 0, Math.PI);
-  ctx.stroke();
-
-  ctx.fillStyle = suit;
-  roundRect(ctx, -18 * scale, 60 * scale, 100 * scale, 122 * scale, 6 * scale);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = tie;
-  ctx.beginPath();
-  ctx.moveTo(32 * scale, 84 * scale);
-  ctx.lineTo(44 * scale, 108 * scale);
-  ctx.lineTo(32 * scale, 154 * scale);
-  ctx.lineTo(20 * scale, 108 * scale);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = suit;
-  ctx.fillRect(-18 * scale, 182 * scale, 36 * scale, 68 * scale);
-  ctx.fillRect(46 * scale, 182 * scale, 36 * scale, 68 * scale);
-  ctx.strokeRect(-18 * scale, 182 * scale, 36 * scale, 68 * scale);
-  ctx.strokeRect(46 * scale, 182 * scale, 36 * scale, 68 * scale);
-
-  ctx.fillStyle = '#2C2C2A';
-  roundRect(ctx, -26 * scale, 252 * scale, 52 * scale, 20 * scale, 10 * scale);
-  ctx.fill();
-  ctx.stroke();
-  roundRect(ctx, 38 * scale, 252 * scale, 52 * scale, 20 * scale, 10 * scale);
-  ctx.fill();
-  ctx.stroke();
+function drawWrappedCenteredText(ctx, text, layout) {
+  const wrapped = getWrappedTextLayout(ctx, text, layout);
+  ctx.save();
+  ctx.font = getShareFont(wrapped.fontSize, layout.weight, layout.latinOnly);
+  ctx.fillStyle = layout.fillStyle;
+  wrapped.lines.forEach((line, index) => {
+    ctx.fillText(line, layout.x, layout.y + index * wrapped.fontSize * 1.18);
+  });
   ctx.restore();
 }
 
-function drawShareCardHeader(ctx, canvas, data) {
+function drawShareCardText(ctx, data, lang, layout, templateConfig) {
+  const textConfig = templateConfig.fixedText || SHARE_CARD_TEMPLATE_CONFIG.zh.fixedText;
+  ctx.save();
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  ctx.fillStyle = '#E44A28';
-  roundRect(ctx, 356, 92, 488, 72, 30);
-  ctx.fill();
+  if (templateConfig.drawFixedText) {
+    drawCenteredText(ctx, textConfig.topPillText, layout.topPillText.x, layout.topPillText.y, layout.topPillText);
+    drawCenteredText(ctx, textConfig.heading, layout.heading.x, layout.heading.y, layout.heading);
+    drawCenteredText(ctx, textConfig.koLabel, layout.koLabel.x, layout.koLabel.y, layout.koLabel);
+    drawCenteredText(ctx, textConfig.scoreLabel, layout.scoreLabel.x, layout.scoreLabel.y, layout.scoreLabel);
+    drawCenteredText(ctx, textConfig.comboLabel, layout.comboLabel.x, layout.comboLabel.y, layout.comboLabel);
+    drawCenteredText(ctx, textConfig.modeText, layout.modeText.x, layout.modeText.y, {
+      ...layout.modeText,
+      latinOnly: lang === 'en',
+    });
+    drawCenteredText(ctx, textConfig.footerText, layout.footerText.x, layout.footerText.y, layout.footerText);
+  }
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = getShareFont(28, 800);
-  ctx.fillText(ui('shareCardPill'), canvas.width / 2, 138);
+  drawCenteredText(ctx, data.rating_zh, layout.ratingZh.x, layout.ratingZh.y, layout.ratingZh);
+  drawCenteredText(ctx, String(data.rating_en || '').toUpperCase(), layout.ratingEn.x, layout.ratingEn.y, layout.ratingEn);
+  drawCenteredText(ctx, String(data.ko_count), layout.koCount.x, layout.koCount.y, layout.koCount);
+  drawCenteredText(ctx, String(data.score), layout.score.x, layout.score.y, layout.score);
+  drawCenteredText(ctx, `x${data.best_combo}`, layout.bestCombo.x, layout.bestCombo.y, layout.bestCombo);
+  drawWrappedCenteredText(ctx, data.comment_line_1, layout.commentLine1);
+  drawWrappedCenteredText(ctx, data.comment_line_2, layout.commentLine2);
 
-  ctx.fillStyle = '#4B240C';
-  ctx.font = getShareFont(62, 800);
-  ctx.fillText(ui('shareCardIntro'), canvas.width / 2, 242);
-
-  const ratingZhSize = fitTextSize(
-    ctx,
-    data.rating_zh,
-    820,
-    126,
-    82,
-    size => getShareFont(size, 900)
-  );
-  ctx.fillStyle = '#E64824';
-  ctx.font = getShareFont(ratingZhSize, 900);
-  ctx.fillText(data.rating_zh, canvas.width / 2, 390);
-
-  const ratingEnSize = fitTextSize(
-    ctx,
-    data.rating_en.toUpperCase(),
-    840,
-    60,
-    34,
-    size => getShareFont(size, 900, true)
-  );
-  ctx.fillStyle = '#EC9A2B';
-  ctx.font = getShareFont(ratingEnSize, 900, true);
-  ctx.fillText(data.rating_en.toUpperCase(), canvas.width / 2, 468);
-
-  ctx.strokeStyle = '#EC9A2B';
-  ctx.lineWidth = 8;
-  [
-    [188, 312, 124, 282],
-    [188, 350, 110, 350],
-    [188, 388, 124, 420],
-    [1012, 312, 1076, 282],
-    [1012, 350, 1090, 350],
-    [1012, 388, 1076, 420],
-  ].forEach(([x1, y1, x2, y2]) => {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  });
-}
-
-function drawShareCardStats(ctx, stats, top) {
-  stats.forEach((stat, index) => {
-    const boxX = 114 + index * 324;
-    ctx.fillStyle = '#FFFDFC';
-    roundRect(ctx, boxX, top, 248, 170, 24);
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#7A3D16';
-    ctx.stroke();
-
-    ctx.fillStyle = stat.color;
-    ctx.font = getShareFont(76, 900, true);
-    ctx.fillText(stat.value, boxX + 124, top + 94);
-
-    ctx.fillStyle = '#4B240C';
-    ctx.font = getShareFont(28, 800);
-    ctx.fillText(`${stat.icon} ${stat.label}`, boxX + 124, top + 144);
-  });
-}
-
-function drawShareCardComment(ctx, data, canvas, top) {
-  ctx.strokeStyle = '#A46E2B';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(138, top);
-  ctx.lineTo(1062, top);
-  ctx.stroke();
-
-  ctx.fillStyle = '#4F8E46';
-  roundRect(ctx, 340, top + 30, 520, 68, 28);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = getShareFont(30, 900, true);
-  ctx.fillText(`★ ${ui('shareCardMode')} ★`, canvas.width / 2, top + 76);
-
-  ctx.fillStyle = '#FFF9F0';
-  roundRect(ctx, 136, top + 126, 928, 230, 30);
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#E6C28A';
-  ctx.stroke();
-
-  const line1Layout = getWrappedTextLayout(
-    ctx,
-    data.comment_line_1,
-    800,
-    2,
-    LANG === 'en' ? 32 : 34,
-    22,
-    size => getShareFont(size, 700)
-  );
-  ctx.fillStyle = '#4B240C';
-  ctx.font = getShareFont(line1Layout.size, 700);
-  drawCenteredLines(ctx, line1Layout.lines, canvas.width / 2, top + 188, line1Layout.size + 16);
-
-  const line2Layout = getWrappedTextLayout(
-    ctx,
-    data.comment_line_2,
-    800,
-    3,
-    LANG === 'en' ? 30 : 32,
-    20,
-    size => getShareFont(size, 700)
-  );
-  ctx.font = getShareFont(line2Layout.size, 700);
-  const line2StartY = top + 188 + line1Layout.lines.length * (line1Layout.size + 16) + 34;
-  drawCenteredLines(ctx, line2Layout.lines, canvas.width / 2, line2StartY, line2Layout.size + 14);
+  ctx.restore();
 }
 
 function setShareButtonsBusy(isBusy) {
@@ -1241,101 +1192,27 @@ function setShareButtonsBusy(isBusy) {
   });
 }
 
-function buildShareImageBlob() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1200;
-  canvas.height = 1600;
-  const ctx = canvas.getContext('2d');
+async function buildShareImageBlob() {
   const data = shareCardData.rating_zh ? shareCardData : getShareCardData();
-  const stats = [
-    {value: String(data.ko_count), label: ui('statKo'), icon: '🥊', color: '#E64824'},
-    {value: String(data.score), label: ui('statScore'), icon: '🏆', color: '#F09C21'},
-    {value: `x${data.best_combo}`, label: ui('statCombo'), icon: '⚡', color: '#4A8F46'},
-  ];
+  if (document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (err) {
+      console.warn('Share card fonts were not fully ready.', err);
+    }
+  }
 
-  ctx.fillStyle = '#FFF7E8';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const {image: templateImage, config: templateConfig} = await loadShareCardTemplate(LANG);
+  const canvas = document.createElement('canvas');
+  canvas.width = templateImage.width;
+  canvas.height = templateImage.height;
 
-  const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  bg.addColorStop(0, '#FFF9EB');
-  bg.addColorStop(1, '#FFF3DD');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('2D canvas context unavailable.');
+  const layout = scaleLayout(SHARE_CARD_LAYOUT, templateImage.width, templateImage.height);
 
-  ctx.fillStyle = 'rgba(255,214,152,0.24)';
-  ctx.beginPath();
-  ctx.arc(86, 96, 74, 0, Math.PI * 2);
-  ctx.arc(1124, 126, 128, 0, Math.PI * 2);
-  ctx.arc(86, 1340, 128, 0, Math.PI * 2);
-  ctx.arc(1090, 1480, 104, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFDFC';
-  roundRect(ctx, 62, 34, 1076, 1518, 42);
-  ctx.fill();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = '#6A3312';
-  ctx.stroke();
-
-  drawShareCardHeader(ctx, canvas, data);
-
-  ctx.strokeStyle = '#F5B33B';
-  ctx.lineWidth = 5;
-  [
-    [366, 620, 286, 562],
-    [426, 682, 322, 742],
-    [780, 632, 844, 550],
-    [826, 684, 920, 742],
-  ].forEach(([x1, y1, x2, y2]) => {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  });
-
-  ctx.fillStyle = '#E94C25';
-  ctx.font = '900 64px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', 812, 638);
-  ctx.fillStyle = '#FFB23D';
-  ctx.font = '900 42px "Arial Black", Arial, sans-serif';
-  ctx.fillText('★', 750, 870);
-  ctx.fillText('★', 356, 852);
-
-  drawShareCharacter(ctx, 470, 522, 2.52);
-
-  ctx.textAlign = 'center';
-  drawShareCardStats(ctx, stats, 930);
-  drawShareCardComment(ctx, data, canvas, 1146);
-
-  ctx.strokeStyle = '#A46E2B';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(136, 1510);
-  ctx.lineTo(308, 1510);
-  ctx.moveTo(892, 1510);
-  ctx.lineTo(1064, 1510);
-  ctx.stroke();
-
-  ctx.fillStyle = '#F5B33B';
-  ctx.font = '900 44px "Arial Black", Arial, sans-serif';
-  ctx.fillText('•', 352, 1518);
-  ctx.fillText('•', 848, 1518);
-  ctx.fillText('★', 402, 1518);
-  ctx.fillText('★', 798, 1518);
-
-  ctx.fillStyle = '#FFFDFC';
-  roundRect(ctx, 400, 1472, 400, 64, 26);
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#7A3D16';
-  ctx.stroke();
-  ctx.fillStyle = '#4B240C';
-  ctx.font = getShareFont(28, 800);
-  ctx.fillText(ui('shareCardFooter'), canvas.width / 2, 1514);
-
-  ctx.fillStyle = 'rgba(75,36,12,0.45)';
-  ctx.font = '700 16px Arial, sans-serif';
-  ctx.fillText(`build ${BUILD_ID}`, canvas.width / 2, 1552);
+  ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+  drawShareCardText(ctx, data, LANG, layout, templateConfig);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
