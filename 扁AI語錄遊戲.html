@@ -132,8 +132,10 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
 .sh-title{font-size:13px;color:#3D1F08;font-weight:700;margin-top:2px}
 .sh-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .shbtn{padding:9px 16px;border:3px solid #3D1F08;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;line-height:1;white-space:nowrap}
+.shbtn:disabled{opacity:.55;cursor:wait}
 .shbtn.tw{background:#000;color:#fff}
 .shbtn.th{background:#fff;color:#3D1F08}
+.shbtn.dl{background:#FAC775;color:#3D1F08}
 .shbtn:hover{opacity:.85}
 #rbtn{padding:10px 28px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer}
 #rbtn:hover{background:#993C1D}
@@ -301,6 +303,7 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
     <div class="rating" id="rating">評級中...</div>
     <div class="sh-title" id="share-title">分享你的戰績圖！</div>
     <div class="sh-btns">
+      <button class="shbtn dl" id="dlbtn" onclick="downloadShareCard()">下載 JPG</button>
       <button class="shbtn tw" id="twbtn" onclick="shareX()">𝕏 / Twitter</button>
       <button class="shbtn th" id="thbtn" onclick="shareThreads()">Threads</button>
     </div>
@@ -338,10 +341,12 @@ const UI = {
     statScore: '總得分',
     statCombo: '最高連擊',
     ratingPending: '評級中...',
-    shareTitle: '分享你的戰績圖！',
+    shareTitle: '下載或分享你的戰績圖！',
+    downloadJpg: '下載 JPG',
     shareX: '𝕏 / Twitter',
     shareThreads: 'Threads',
-    sharePreparing: '製作分享圖中…',
+    sharePreparing: '製作 JPG 中…',
+    shareReady: 'JPG 已就緒',
     shareCardHeader: '30 秒限時拳擊挑戰',
     shareCardCta: '你也來試試！',
     shareCardFooter: '扁 AI 語錄',
@@ -382,10 +387,12 @@ const UI = {
     statScore: 'Score',
     statCombo: 'Best Combo',
     ratingPending: 'Calculating rating...',
-    shareTitle: 'Share your score card!',
+    shareTitle: 'Download or share your score card!',
+    downloadJpg: 'Download JPG',
     shareX: '𝕏 / Twitter',
     shareThreads: 'Threads',
-    sharePreparing: 'Building share image...',
+    sharePreparing: 'Building JPG...',
+    shareReady: 'JPG ready',
     shareCardHeader: '30-Second Beatdown',
     shareCardCta: 'Can you beat this score?',
     shareCardFooter: 'Punch AI Quotes',
@@ -560,6 +567,7 @@ const RATINGS = [
 
 /* ─── State ─── */
 let GST='start',tLeft=30,sc=0,koC=0,cb=1,maxCb=1,nHP=3,lt=0,pt=0,tIv=null,cOrder=[],cPos=0,busy=false,prevSec=30,gameMode='timed';
+let shareCardBlob = null, shareCardFilename = '', shareCardPromise = null;
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function ui(key){return UI[LANG][key]}
@@ -603,6 +611,7 @@ function applyLanguage() {
   document.getElementById('ecb-label').textContent = ui('statCombo');
   document.getElementById('rating').textContent = ui('ratingPending');
   document.getElementById('share-title').textContent = ui('shareTitle');
+  document.getElementById('dlbtn').textContent = ui('downloadJpg');
   document.getElementById('twbtn').textContent = ui('shareX');
   document.getElementById('thbtn').textContent = ui('shareThreads');
   document.getElementById('rbtn').textContent = ui('retry');
@@ -829,6 +838,9 @@ function startGame(mode = 'timed') {
   document.getElementById('garea').style.display = 'block';
   document.getElementById('es').classList.remove('on');
   clearInterval(tIv);
+  shareCardBlob = null;
+  shareCardFilename = '';
+  shareCardPromise = null;
   gameMode = mode;
   cOrder = shuffle([...Array(NPCS.length).keys()]);
   cPos = 0; tLeft = mode === 'timed' ? 30 : Infinity; sc = 0; koC = 0; cb = 1; maxCb = 1; nHP = 3; lt = 0; pt = 0; busy = false; prevSec = 30;
@@ -850,6 +862,7 @@ function endGame() {
   let r = RATINGS[0];
   for (const rating of RATINGS) if (koC >= rating.min) r = rating;
   document.getElementById('rating').textContent = r.title[LANG] + ' — ' + r.sub[LANG];
+  prepareShareCard();
   setTimeout(() => document.getElementById('es').classList.add('on'), 400);
 }
 
@@ -982,6 +995,12 @@ function drawShareCharacter(ctx, x, y, scale = 1) {
   ctx.restore();
 }
 
+function setShareButtonsBusy(isBusy) {
+  ['dlbtn','twbtn','thbtn'].forEach(id => {
+    document.getElementById(id).disabled = isBusy;
+  });
+}
+
 function buildShareImageBlob() {
   const canvas = document.createElement('canvas');
   canvas.width = 1200;
@@ -1088,7 +1107,7 @@ function buildShareImageBlob() {
         return;
       }
       resolve(blob);
-    }, 'image/png');
+    }, 'image/jpeg', 0.92);
   });
 }
 
@@ -1101,6 +1120,68 @@ function downloadBlob(blob, filename) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function getShareFilename() {
+  return `${LANG === 'en' ? 'punch-ai-quotes' : '扁AI語錄'}-${koC}ko-${sc}pts.jpg`;
+}
+
+async function prepareShareCard() {
+  shareCardBlob = null;
+  shareCardFilename = getShareFilename();
+  shareCardPromise = buildShareImageBlob()
+    .then(blob => {
+      shareCardBlob = blob;
+      return blob;
+    })
+    .catch(err => {
+      shareCardBlob = null;
+      throw err;
+    });
+
+  const dlbtn = document.getElementById('dlbtn');
+  setShareButtonsBusy(true);
+  dlbtn.textContent = ui('sharePreparing');
+  try {
+    await shareCardPromise;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    dlbtn.textContent = ui('downloadJpg');
+    setShareButtonsBusy(false);
+  }
+}
+
+async function ensureShareCardReady() {
+  if (shareCardBlob) return shareCardBlob;
+  if (!shareCardPromise) {
+    shareCardFilename = getShareFilename();
+    shareCardPromise = buildShareImageBlob().then(blob => {
+      shareCardBlob = blob;
+      return blob;
+    });
+  }
+  return shareCardPromise;
+}
+
+async function downloadShareCard() {
+  const btn = document.getElementById('dlbtn');
+  btn.disabled = true;
+  btn.textContent = ui('sharePreparing');
+  try {
+    const blob = await ensureShareCardReady();
+    downloadBlob(blob, shareCardFilename || getShareFilename());
+    btn.textContent = ui('shareReady');
+    setTimeout(() => {
+      btn.textContent = ui('downloadJpg');
+      btn.disabled = false;
+    }, 1200);
+    return;
+  } catch (err) {
+    console.error(err);
+  }
+  btn.textContent = ui('downloadJpg');
+  btn.disabled = false;
 }
 
 function getComposerUrl(platform) {
@@ -1118,9 +1199,9 @@ async function shareSocial(platform) {
   btn.textContent = ui('sharePreparing');
 
   try {
-    const blob = await buildShareImageBlob();
-    const filename = `${LANG === 'en' ? 'punch-ai-quotes' : '扁AI語錄'}-${koC}ko-${sc}pts.png`;
-    const file = typeof File === 'function' ? new File([blob], filename, {type:'image/png'}) : null;
+    const blob = await ensureShareCardReady();
+    const filename = shareCardFilename || getShareFilename();
+    const file = typeof File === 'function' ? new File([blob], filename, {type:'image/jpeg'}) : null;
 
     if (file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
       await navigator.share({
