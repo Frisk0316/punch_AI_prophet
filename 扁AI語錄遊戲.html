@@ -981,20 +981,38 @@ const SHARE_CARD_LAYOUT = {
   canvasWidth: 1086,
   canvasHeight: 1448,
   topPillText: {x: 543, y: 104, maxWidth: 420, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#FFFFFF'},
-  heading: {x: 543, y: 198, maxWidth: 680, maxFontSize: 56, minFontSize: 28, weight: 800, fillStyle: '#4B240C'},
-  ratingZh: {x: 543, y: 304, maxWidth: 700, maxFontSize: 90, minFontSize: 40, weight: 900, fillStyle: '#E64824'},
-  ratingEn: {x: 543, y: 407, maxWidth: 720, maxFontSize: 48, minFontSize: 24, weight: 900, fillStyle: '#EC9A2B', latinOnly: true},
+  heading: {x: 543, y: 195, maxWidth: 680, maxFontSize: 56, minFontSize: 28, weight: 800, fillStyle: '#4B240C'},
+  ratingZh: {x: 543, y: 320, maxWidth: 700, maxFontSize: 90, minFontSize: 40, weight: 900, fillStyle: '#E64824'},
+  ratingEn: {x: 543, y: 430, maxWidth: 720, maxFontSize: 48, minFontSize: 24, weight: 900, fillStyle: '#EC9A2B', latinOnly: true},
   koCount: {x: 212, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#E64824', latinOnly: true},
   score: {x: 543, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#EC9A2B', latinOnly: true},
   bestCombo: {x: 874, y: 900, maxWidth: 220, maxFontSize: 74, minFontSize: 30, weight: 900, fillStyle: '#4A8F46', latinOnly: true},
-  koLabel: {x: 212, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
-  scoreLabel: {x: 543, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
-  comboLabel: {x: 874, y: 965, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
-  modeText: {x: 543, y: 1070, maxWidth: 430, maxFontSize: 28, minFontSize: 16, weight: 900, fillStyle: '#FFFFFF', latinOnly: true},
-  commentLine1: {x: 543, y: 1210, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
-  commentLine2: {x: 543, y: 1310, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
+  koLabel: {x: 212, y: 975, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  scoreLabel: {x: 543, y: 975, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  comboLabel: {x: 874, y: 975, maxWidth: 220, maxFontSize: 28, minFontSize: 16, weight: 800, fillStyle: '#4B240C'},
+  statGroupCover: {width: 252, height: 62, yOffset: 4, fillStyle: '#F8F5EE'},
+  statIcon: {fontSize: 27, gap: 10, fillStyle: '#4B240C'},
+  modeBadge: {x: 543, y: 1075, width: 452, height: 68, radius: 34, fillStyle: '#578F49'},
+  modeText: {x: 543, y: 1075, maxWidth: 410, maxFontSize: 28, minFontSize: 16, weight: 900, fillStyle: '#FFFFFF', latinOnly: true},
+  commentGuide1: {x1: 160, x2: 926, y: 1200, lineWidth: 2, strokeStyle: '#C69E6B', dash: [8, 8]},
+  commentGuide2: {x1: 160, x2: 926, y: 1295, lineWidth: 2, strokeStyle: '#C69E6B', dash: [8, 8]},
+  commentLineCover: {width: 790, height: 54, fillStyle: '#FBF4E8'},
+  commentLine1: {x: 543, y: 1235, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
+  commentLine2: {x: 543, y: 1325, maxWidth: 760, maxFontSize: 32, minFontSize: 18, weight: 700, fillStyle: '#4B240C', maxLines: 1},
+  footerBadge: {x: 543, y: 1400, width: 392, height: 58, radius: 29, fillStyle: '#FCFBF8', strokeStyle: '#7A3D16', lineWidth: 3},
   footerText: {x: 543, y: 1400, maxWidth: 320, maxFontSize: 26, minFontSize: 14, weight: 800, fillStyle: '#4B240C'},
 };
+
+function roundRect(ctx, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, safeRadius);
+  ctx.arcTo(x + width, y + height, x, y + height, safeRadius);
+  ctx.arcTo(x, y + height, x, y, safeRadius);
+  ctx.arcTo(x, y, x + width, y, safeRadius);
+  ctx.closePath();
+}
 
 function getShareFont(size, weight = 700, latinOnly = false) {
   if (latinOnly) return `${weight} ${size}px "Arial Black", Arial, sans-serif`;
@@ -1134,11 +1152,21 @@ function scaleLayout(layout, width, height) {
     if (!value || typeof value !== 'object' || key === 'canvasWidth' || key === 'canvasHeight') return;
     scaled[key] = {
       ...value,
-      x: value.x * scaleX,
-      y: value.y * scaleY,
+      x: value.x != null ? value.x * scaleX : value.x,
+      y: value.y != null ? value.y * scaleY : value.y,
+      x1: value.x1 != null ? value.x1 * scaleX : value.x1,
+      x2: value.x2 != null ? value.x2 * scaleX : value.x2,
       maxWidth: value.maxWidth ? value.maxWidth * scaleX : value.maxWidth,
+      width: value.width ? value.width * scaleX : value.width,
+      height: value.height ? value.height * scaleY : value.height,
+      radius: value.radius ? value.radius * fontScale : value.radius,
       maxFontSize: value.maxFontSize ? value.maxFontSize * fontScale : value.maxFontSize,
       minFontSize: value.minFontSize ? value.minFontSize * fontScale : value.minFontSize,
+      fontSize: value.fontSize ? value.fontSize * fontScale : value.fontSize,
+      gap: value.gap ? value.gap * scaleX : value.gap,
+      yOffset: value.yOffset != null ? value.yOffset * scaleY : value.yOffset,
+      lineWidth: value.lineWidth ? value.lineWidth * fontScale : value.lineWidth,
+      dash: Array.isArray(value.dash) ? value.dash.map(unit => unit * scaleX) : value.dash,
     };
   });
 
@@ -1156,6 +1184,54 @@ function drawWrappedCenteredText(ctx, text, layout) {
   ctx.restore();
 }
 
+function fillCenteredRect(ctx, x, y, width, height, fillStyle) {
+  ctx.save();
+  ctx.fillStyle = fillStyle;
+  ctx.fillRect(x - width / 2, y - height / 2, width, height);
+  ctx.restore();
+}
+
+function drawGuideLine(ctx, guide) {
+  ctx.save();
+  ctx.strokeStyle = guide.strokeStyle;
+  ctx.lineWidth = guide.lineWidth;
+  ctx.setLineDash(guide.dash || []);
+  ctx.beginPath();
+  ctx.moveTo(guide.x1, guide.y);
+  ctx.lineTo(guide.x2, guide.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawStatLabelGroup(ctx, centerX, centerY, icon, label, labelLayout, iconLayout) {
+  const iconFontSize = Math.max(iconLayout.fontSize, labelLayout.minFontSize);
+  const labelFontSize = fitText(ctx, label, {
+    maxWidth: labelLayout.maxWidth - iconFontSize - iconLayout.gap,
+    maxFontSize: labelLayout.maxFontSize,
+    minFontSize: labelLayout.minFontSize,
+    fontFactory: size => getShareFont(size, labelLayout.weight, false),
+  });
+  const iconFont = `${iconFontSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  const labelFont = getShareFont(labelFontSize, labelLayout.weight, false);
+
+  ctx.save();
+  ctx.font = iconFont;
+  const iconWidth = ctx.measureText(icon).width;
+  ctx.font = labelFont;
+  const labelWidth = ctx.measureText(label).width;
+  const totalWidth = iconWidth + iconLayout.gap + labelWidth;
+  const startX = centerX - totalWidth / 2;
+
+  ctx.font = iconFont;
+  ctx.fillStyle = iconLayout.fillStyle;
+  ctx.fillText(icon, startX + iconWidth / 2, centerY);
+
+  ctx.font = labelFont;
+  ctx.fillStyle = labelLayout.fillStyle;
+  ctx.fillText(label, startX + iconWidth + iconLayout.gap + labelWidth / 2, centerY);
+  ctx.restore();
+}
+
 function drawShareCardText(ctx, data, lang, layout, templateConfig) {
   const textConfig = templateConfig.fixedText || SHARE_CARD_TEMPLATE_CONFIG.zh.fixedText;
   ctx.save();
@@ -1165,13 +1241,54 @@ function drawShareCardText(ctx, data, lang, layout, templateConfig) {
   if (templateConfig.drawFixedText) {
     drawCenteredText(ctx, textConfig.topPillText, layout.topPillText.x, layout.topPillText.y, layout.topPillText);
     drawCenteredText(ctx, textConfig.heading, layout.heading.x, layout.heading.y, layout.heading);
-    drawCenteredText(ctx, textConfig.koLabel, layout.koLabel.x, layout.koLabel.y, layout.koLabel);
-    drawCenteredText(ctx, textConfig.scoreLabel, layout.scoreLabel.x, layout.scoreLabel.y, layout.scoreLabel);
-    drawCenteredText(ctx, textConfig.comboLabel, layout.comboLabel.x, layout.comboLabel.y, layout.comboLabel);
+
+    [layout.koLabel.x, layout.scoreLabel.x, layout.comboLabel.x].forEach(centerX => {
+      fillCenteredRect(
+        ctx,
+        centerX,
+        layout.koLabel.y + (layout.statGroupCover.yOffset || 0),
+        layout.statGroupCover.width,
+        layout.statGroupCover.height,
+        layout.statGroupCover.fillStyle
+      );
+    });
+    drawStatLabelGroup(ctx, layout.koLabel.x, layout.koLabel.y, '🥊', textConfig.koLabel, layout.koLabel, layout.statIcon);
+    drawStatLabelGroup(ctx, layout.scoreLabel.x, layout.scoreLabel.y, '🏆', textConfig.scoreLabel, layout.scoreLabel, layout.statIcon);
+    drawStatLabelGroup(ctx, layout.comboLabel.x, layout.comboLabel.y, '⚡', textConfig.comboLabel, layout.comboLabel, layout.statIcon);
+
+    roundRect(
+      ctx,
+      layout.modeBadge.x - layout.modeBadge.width / 2,
+      layout.modeBadge.y - layout.modeBadge.height / 2,
+      layout.modeBadge.width,
+      layout.modeBadge.height,
+      layout.modeBadge.radius
+    );
+    ctx.fillStyle = layout.modeBadge.fillStyle;
+    ctx.fill();
     drawCenteredText(ctx, textConfig.modeText, layout.modeText.x, layout.modeText.y, {
       ...layout.modeText,
       latinOnly: lang === 'en',
     });
+
+    fillCenteredRect(ctx, layout.commentLine1.x, layout.commentLine1.y, layout.commentLineCover.width, layout.commentLineCover.height, layout.commentLineCover.fillStyle);
+    fillCenteredRect(ctx, layout.commentLine2.x, layout.commentLine2.y, layout.commentLineCover.width, layout.commentLineCover.height, layout.commentLineCover.fillStyle);
+    drawGuideLine(ctx, layout.commentGuide1);
+    drawGuideLine(ctx, layout.commentGuide2);
+
+    roundRect(
+      ctx,
+      layout.footerBadge.x - layout.footerBadge.width / 2,
+      layout.footerBadge.y - layout.footerBadge.height / 2,
+      layout.footerBadge.width,
+      layout.footerBadge.height,
+      layout.footerBadge.radius
+    );
+    ctx.fillStyle = layout.footerBadge.fillStyle;
+    ctx.fill();
+    ctx.lineWidth = layout.footerBadge.lineWidth;
+    ctx.strokeStyle = layout.footerBadge.strokeStyle;
+    ctx.stroke();
     drawCenteredText(ctx, textConfig.footerText, layout.footerText.x, layout.footerText.y, layout.footerText);
   }
 

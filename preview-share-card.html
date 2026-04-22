@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Share Card Preview</title>
+  <style>
+    html, body {
+      margin: 0;
+      background: #f7efe1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    img {
+      display: block;
+      width: 1086px;
+      height: 1448px;
+    }
+
+    iframe {
+      position: fixed;
+      width: 0;
+      height: 0;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="app-frame" src="file:///home/frisk/punch_those_AI/%E6%89%81AI%E8%AA%9E%E9%8C%84%E9%81%8A%E6%88%B2.html"></iframe>
+  <img id="preview" alt="share card preview">
+  <script>
+    async function boot() {
+      const frame = document.getElementById('app-frame');
+      const img = document.getElementById('preview');
+
+      await new Promise((resolve, reject) => {
+        frame.onload = resolve;
+        frame.onerror = () => reject(new Error('Failed to load game iframe.'));
+      });
+
+      const app = frame.contentWindow;
+      app.eval(`
+        koC = 6;
+        sc = 1980;
+        maxCb = 8;
+        shareCardData = getShareCardData();
+      `);
+
+      const blob = await app.buildShareImageBlob();
+      const url = URL.createObjectURL(blob);
+      img.onload = () => {
+        document.title = 'ready';
+      };
+      img.src = url;
+    }
+
+    boot().catch(err => {
+      document.body.textContent = err.message;
+      document.title = 'error';
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
