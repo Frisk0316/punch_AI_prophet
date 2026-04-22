@@ -30,10 +30,11 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
 #bub::before{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top:16px solid #fff;z-index:1}
 #qt{font-size:13.5px;color:#2C2C2A;line-height:1.65;font-weight:600}
 #qs{font-size:11px;color:#888780;margin-top:4px}
-#hpbar{display:flex;gap:8px;margin-bottom:6px}
+#npcstage{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px;position:relative;z-index:2}
+#hpbar{display:flex;gap:8px;margin:0}
 .hp{width:14px;height:14px;border-radius:50%;background:#E24B4A;border:2px solid #3D1F08;transition:all .2s}
 .hp.e{background:#FFF5D6;border-color:#BA7517}
-#nname{font-size:11px;color:#633806;font-weight:700;background:#FAC775;border:2px solid #BA7517;border-radius:4px;padding:2px 10px;margin-bottom:6px;text-align:center}
+#nname{font-size:11px;color:#633806;font-weight:700;background:#FAC775;border:2px solid #BA7517;border-radius:4px;padding:2px 10px;text-align:center}
 
 /* NPC wrapper — fixed height so gloves know where to aim */
 #npcw{position:relative;width:140px;height:190px;display:flex;align-items:flex-end;justify-content:center}
@@ -132,8 +133,7 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
 .sh-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .shbtn{padding:9px 16px;border:3px solid #3D1F08;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;line-height:1;white-space:nowrap}
 .shbtn.tw{background:#000;color:#fff}
-.shbtn.ln{background:#00B900;color:#fff}
-.shbtn.cp{background:#fff;color:#3D1F08}
+.shbtn.th{background:#fff;color:#3D1F08}
 .shbtn:hover{opacity:.85}
 #rbtn{padding:10px 28px;background:#D85A30;color:#fff;border:3px solid #3D1F08;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer}
 #rbtn:hover{background:#993C1D}
@@ -153,10 +153,11 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
   #bub::before{bottom:-17px;border-width:11px;border-top-width:19px}
   #qt{font-size:28px}
   #qs{font-size:17px;margin-top:8px}
-  #hpbar{gap:14px;margin-bottom:14px}
+  #npcstage{gap:12px;margin-top:12px}
+  #hpbar{gap:14px}
   .hp{width:20px;height:20px}
-  #nname{font-size:17px;padding:5px 18px;margin-bottom:18px}
-  #npcw{width:300px;height:400px;margin-top:28px;transform:scale(1.9);transform-origin:50% 100%}
+  #nname{font-size:17px;padding:5px 18px}
+  #npcw{width:300px;height:400px;transform:scale(1.9);transform-origin:50% 100%}
   #garea{height:290px}
   #gw-left{left:clamp(44px,8vw,140px)}
   #gw-right{right:clamp(44px,8vw,140px)}
@@ -218,18 +219,20 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
   <!-- Arena -->
   <div id="arena" onclick="punch(event)">
     <div id="bub"><div id="qt"></div><div id="qs"></div></div>
-    <div id="hpbar"><div class="hp" id="h1"></div><div class="hp" id="h2"></div><div class="hp" id="h3"></div></div>
-    <div id="nname"></div>
-    <div id="npcw">
-      <div id="npc">
-        <div id="hd">
-          <div id="eys"><div class="ey" id="el"></div><div class="ey" id="er"></div></div>
-          <div id="mth"></div>
-        </div>
-        <div id="tor"><div id="tie"></div></div>
-        <div id="lgs">
-          <div><div class="lg" id="ll"></div><div class="sh"></div></div>
-          <div><div class="lg" id="lr"></div><div class="sh"></div></div>
+    <div id="npcstage">
+      <div id="hpbar"><div class="hp" id="h1"></div><div class="hp" id="h2"></div><div class="hp" id="h3"></div></div>
+      <div id="nname"></div>
+      <div id="npcw">
+        <div id="npc">
+          <div id="hd">
+            <div id="eys"><div class="ey" id="el"></div><div class="ey" id="er"></div></div>
+            <div id="mth"></div>
+          </div>
+          <div id="tor"><div id="tie"></div></div>
+          <div id="lgs">
+            <div><div class="lg" id="ll"></div><div class="sh"></div></div>
+            <div><div class="lg" id="lr"></div><div class="sh"></div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -296,11 +299,10 @@ body{background:#FFF5D6;display:flex;align-items:stretch;justify-content:stretch
       <div class="sbox"><div class="snum" id="ecb">0</div><div class="slbl" id="ecb-label">最高連擊</div></div>
     </div>
     <div class="rating" id="rating">評級中...</div>
-    <div class="sh-title" id="share-title">分享你的成績！</div>
+    <div class="sh-title" id="share-title">分享你的戰績圖！</div>
     <div class="sh-btns">
       <button class="shbtn tw" id="twbtn" onclick="shareX()">𝕏 / Twitter</button>
-      <button class="shbtn ln" id="lnbtn" onclick="shareLine()">LINE</button>
-      <button class="shbtn cp" id="cpbtn" onclick="copyScore()">複製成績</button>
+      <button class="shbtn th" id="thbtn" onclick="shareThreads()">Threads</button>
     </div>
     <button id="rbtn" onclick="resetGame(event)">再挑戰一次！</button>
   </div>
@@ -336,11 +338,13 @@ const UI = {
     statScore: '總得分',
     statCombo: '最高連擊',
     ratingPending: '評級中...',
-    shareTitle: '分享你的成績！',
+    shareTitle: '分享你的戰績圖！',
     shareX: '𝕏 / Twitter',
-    shareLine: 'LINE',
-    copy: '複製成績',
-    copied: '已複製！',
+    shareThreads: 'Threads',
+    sharePreparing: '製作分享圖中…',
+    shareCardHeader: '30 秒限時拳擊挑戰',
+    shareCardCta: '你也來試試！',
+    shareCardFooter: '扁 AI 語錄',
     retry: '再挑戰一次！',
     stopRun: '結束本局',
     newChallenger: '新挑戰者出現！',
@@ -378,11 +382,13 @@ const UI = {
     statScore: 'Score',
     statCombo: 'Best Combo',
     ratingPending: 'Calculating rating...',
-    shareTitle: 'Share your score!',
+    shareTitle: 'Share your score card!',
     shareX: '𝕏 / Twitter',
-    shareLine: 'LINE',
-    copy: 'Copy Score',
-    copied: 'Copied!',
+    shareThreads: 'Threads',
+    sharePreparing: 'Building share image...',
+    shareCardHeader: '30-Second Beatdown',
+    shareCardCta: 'Can you beat this score?',
+    shareCardFooter: 'Punch AI Quotes',
     retry: 'Fight Again',
     stopRun: 'End Run',
     newChallenger: 'New Challenger!',
@@ -598,8 +604,7 @@ function applyLanguage() {
   document.getElementById('rating').textContent = ui('ratingPending');
   document.getElementById('share-title').textContent = ui('shareTitle');
   document.getElementById('twbtn').textContent = ui('shareX');
-  document.getElementById('lnbtn').textContent = ui('shareLine');
-  document.getElementById('cpbtn').textContent = ui('copy');
+  document.getElementById('thbtn').textContent = ui('shareThreads');
   document.getElementById('rbtn').textContent = ui('retry');
 }
 
@@ -852,20 +857,297 @@ function getShareUrl() {
   return window.location.href;
 }
 
-function getTxt() {
-  if (LANG === 'en') {
-    return `In the 30-second challenge, I knocked out ${koC} AI hot-take hustlers!\nScored ${sc} points, best combo x${maxCb}!\nRating: ${document.getElementById('rating').textContent.split('—')[0].trim()}\n\nCan you beat it?\n${getShareUrl()}\n\n${ui('hashtags')}`;
-  }
-  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${document.getElementById('rating').textContent.split('—')[0].trim()}\n\n你也來試試！\n${getShareUrl()}\n\n${ui('hashtags')}`;
+function getRatingSummary() {
+  const text = document.getElementById('rating').textContent;
+  const parts = text.split('—').map(part => part.trim()).filter(Boolean);
+  return {
+    title: parts[0] || text.trim(),
+    sub: parts[1] || '',
+  };
 }
 
-function shareX()     { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getTxt()), '_blank'); }
-function shareLine()  { window.open('https://social-plugins.line.me/lineit/share?text=' + encodeURIComponent(getTxt()), '_blank'); }
-function copyScore()  {
-  const btn = document.getElementById('cpbtn');
-  (navigator.clipboard ? navigator.clipboard.writeText(getTxt()) : Promise.reject())
-    .then(() => { btn.textContent = ui('copied'); setTimeout(() => btn.textContent = ui('copy'), 2000); })
-    .catch(() => { btn.textContent = ui('copied'); setTimeout(() => btn.textContent = ui('copy'), 2000); });
+function getTxt() {
+  const rating = getRatingSummary();
+  if (LANG === 'en') {
+    return `In the 30-second challenge, I knocked out ${koC} AI hot-take hustlers!\nScored ${sc} points, best combo x${maxCb}!\nRating: ${rating.title}\n\nCan you beat it?\n${getShareUrl()}\n\n${ui('hashtags')}`;
+  }
+  return `我在30秒限時挑戰中，KO了${koC}個AI語錄神棍！\n得了${sc}分，最高連擊×${maxCb}！\n評級：${rating.title}\n\n你也來試試！\n${getShareUrl()}\n\n${ui('hashtags')}`;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawCenteredLines(ctx, lines, x, startY, lineHeight) {
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, startY + index * lineHeight);
+  });
+}
+
+function wrapTextLines(ctx, text, maxWidth) {
+  const chars = [...text];
+  const lines = [];
+  let current = '';
+  for (const ch of chars) {
+    const next = current + ch;
+    if (current && ctx.measureText(next).width > maxWidth) {
+      lines.push(current);
+      current = ch;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function drawShareCharacter(ctx, x, y, scale = 1) {
+  const stroke = '#3D1F08';
+  const skin = '#F5C4A0';
+  const suit = '#5A3A1A';
+  const tie = '#1D9E75';
+  const line = 6 * scale;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.lineWidth = line;
+  ctx.strokeStyle = stroke;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  ctx.fillStyle = '#E24B4A';
+  [0, 32, 64].forEach(offset => {
+    ctx.beginPath();
+    ctx.arc(offset, -80 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = skin;
+  ctx.fillRect(-54 * scale, -12 * scale, 30 * scale, 42 * scale);
+  ctx.fillRect(58 * scale, -12 * scale, 30 * scale, 42 * scale);
+  ctx.strokeRect(-54 * scale, -12 * scale, 30 * scale, 42 * scale);
+  ctx.strokeRect(58 * scale, -12 * scale, 30 * scale, 42 * scale);
+
+  ctx.beginPath();
+  ctx.arc(32 * scale, 0, 56 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = stroke;
+  ctx.beginPath();
+  ctx.arc(4 * scale, -2 * scale, 7 * scale, 0, Math.PI * 2);
+  ctx.arc(60 * scale, -2 * scale, 7 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.lineWidth = 5 * scale;
+  ctx.arc(32 * scale, 14 * scale, 18 * scale, 0, Math.PI);
+  ctx.stroke();
+
+  ctx.fillStyle = suit;
+  roundRect(ctx, -18 * scale, 60 * scale, 100 * scale, 122 * scale, 6 * scale);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = tie;
+  ctx.beginPath();
+  ctx.moveTo(32 * scale, 84 * scale);
+  ctx.lineTo(44 * scale, 108 * scale);
+  ctx.lineTo(32 * scale, 154 * scale);
+  ctx.lineTo(20 * scale, 108 * scale);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = suit;
+  ctx.fillRect(-18 * scale, 182 * scale, 36 * scale, 68 * scale);
+  ctx.fillRect(46 * scale, 182 * scale, 36 * scale, 68 * scale);
+  ctx.strokeRect(-18 * scale, 182 * scale, 36 * scale, 68 * scale);
+  ctx.strokeRect(46 * scale, 182 * scale, 36 * scale, 68 * scale);
+
+  ctx.fillStyle = '#2C2C2A';
+  roundRect(ctx, -26 * scale, 252 * scale, 52 * scale, 20 * scale, 10 * scale);
+  ctx.fill();
+  ctx.stroke();
+  roundRect(ctx, 38 * scale, 252 * scale, 52 * scale, 20 * scale, 10 * scale);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function buildShareImageBlob() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 1500;
+  const ctx = canvas.getContext('2d');
+  const rating = getRatingSummary();
+  const stats = [
+    {value: koC, label: ui('statKo')},
+    {value: sc, label: ui('statScore')},
+    {value: maxCb, label: ui('statCombo')},
+  ];
+
+  ctx.fillStyle = '#FFF5D6';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  bg.addColorStop(0, '#FFF8E4');
+  bg.addColorStop(1, '#FFE7B8');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'rgba(216,90,48,0.14)';
+  ctx.beginPath();
+  ctx.arc(1080, 190, 150, 0, Math.PI * 2);
+  ctx.arc(140, 1310, 210, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFDF7';
+  roundRect(ctx, 72, 72, 1056, 1356, 44);
+  ctx.fill();
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#3D1F08';
+  ctx.stroke();
+
+  ctx.fillStyle = '#3D1F08';
+  ctx.font = '900 44px "Arial Black", "Noto Sans TC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(ui('shareCardHeader'), canvas.width / 2, 152);
+
+  ctx.fillStyle = '#D85A30';
+  ctx.font = '900 96px Impact, "Arial Black", sans-serif';
+  ctx.fillText(ui('timeUp'), canvas.width / 2, 270);
+
+  drawShareCharacter(ctx, 458, 472, 2.5);
+
+  ctx.fillStyle = '#FAC775';
+  roundRect(ctx, 710, 360, 300, 64, 26);
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#BA7517';
+  ctx.stroke();
+
+  ctx.fillStyle = '#633806';
+  ctx.font = '700 28px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(ui('shareCardFooter'), 860, 403);
+
+  const titleFont = LANG === 'en' ? '900 72px Impact, "Arial Black", sans-serif' : '900 64px "Noto Sans TC", "Arial Black", sans-serif';
+  ctx.fillStyle = '#D85A30';
+  ctx.font = titleFont;
+  ctx.fillText(rating.title, 858, 510);
+
+  if (rating.sub) {
+    ctx.fillStyle = '#3D1F08';
+    ctx.font = LANG === 'en' ? '700 34px Arial, sans-serif' : '700 34px "Noto Sans TC", Arial, sans-serif';
+    ctx.fillText(rating.sub, 858, 560);
+  }
+
+  stats.forEach((stat, index) => {
+    const boxX = 120 + index * 320;
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, boxX, 820, 280, 220, 28);
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#3D1F08';
+    ctx.stroke();
+
+    ctx.fillStyle = '#D85A30';
+    ctx.font = '900 82px Impact, "Arial Black", sans-serif';
+    ctx.fillText(String(stat.value), boxX + 140, 915);
+
+    ctx.fillStyle = '#7B766B';
+    ctx.font = LANG === 'en' ? '700 30px Arial, sans-serif' : '700 30px "Noto Sans TC", Arial, sans-serif';
+    const labelLines = wrapTextLines(ctx, stat.label, 220);
+    drawCenteredLines(ctx, labelLines, boxX + 140, 970, 36);
+  });
+
+  ctx.fillStyle = '#FAC775';
+  roundRect(ctx, 120, 1098, 960, 120, 30);
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#BA7517';
+  ctx.stroke();
+
+  ctx.fillStyle = '#3D1F08';
+  ctx.font = LANG === 'en' ? '700 40px Arial, sans-serif' : '700 40px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(ui('shareCardCta'), canvas.width / 2, 1174);
+  ctx.font = LANG === 'en' ? '700 28px Arial, sans-serif' : '700 28px "Noto Sans TC", Arial, sans-serif';
+  ctx.fillText(getShareUrl(), canvas.width / 2, 1258);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        reject(new Error('Failed to generate share image.'));
+        return;
+      }
+      resolve(blob);
+    }, 'image/png');
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function getComposerUrl(platform) {
+  const text = getTxt();
+  if (platform === 'threads') {
+    return 'https://www.threads.net/intent/post?text=' + encodeURIComponent(text);
+  }
+  return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+}
+
+async function shareSocial(platform) {
+  const btn = document.getElementById(platform === 'threads' ? 'thbtn' : 'twbtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = ui('sharePreparing');
+
+  try {
+    const blob = await buildShareImageBlob();
+    const filename = `${LANG === 'en' ? 'punch-ai-quotes' : '扁AI語錄'}-${koC}ko-${sc}pts.png`;
+    const file = typeof File === 'function' ? new File([blob], filename, {type:'image/png'}) : null;
+
+    if (file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+      await navigator.share({
+        files: [file],
+        text: getTxt(),
+        title: ui('startTitle'),
+      });
+      return;
+    }
+
+    downloadBlob(blob, filename);
+    window.open(getComposerUrl(platform), '_blank');
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+function shareX() {
+  shareSocial('x');
+}
+
+function shareThreads() {
+  shareSocial('threads');
 }
 
 function resetGame(e) {
