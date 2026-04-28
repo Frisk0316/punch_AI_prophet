@@ -1,0 +1,336 @@
+/* ============================================
+   PUNCH AI — Arcade Pixel Fight Design System
+============================================ */
+
+:root {
+  --ink: #0E0B1A;
+  --ink-2: #1A1530;
+  --ink-3: #261D44;
+  --paper: #F5F1E6;
+  --red: #FF2D5C;
+  --red-deep: #C81D44;
+  --yellow: #FFD23F;
+  --cyan: #00E5FF;
+  --green: #39FF6A;
+  --magenta: #FF4FD8;
+  --grid: rgba(255, 210, 63, .08);
+
+  --pixel: 4px;
+  --shadow: 0 8px 0 rgba(0, 0, 0, .9);
+  --shadow-sm: 0 4px 0 rgba(0, 0, 0, .9);
+
+  --font-pixel: "Press Start 2P", "Silkscreen", monospace;
+  --font-mono: "JetBrains Mono", "Bai Jamjuree", monospace;
+  --font-display: "Bai Jamjuree", "Noto Sans TC", system-ui, sans-serif;
+  --font-zh: "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--font-display);
+  color: var(--paper);
+  background: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================================
+   ARCADE BACKDROP
+============================================ */
+.arcade-bg {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 45, 92, .14), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(0, 229, 255, .10), transparent 55%),
+    linear-gradient(180deg, var(--ink) 0%, #060410 100%);
+  position: relative;
+  overflow: hidden;
+}
+.arcade-bg::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+.arcade-bg::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* ============================================
+   PIXEL BORDERS (chunky outset / inset)
+============================================ */
+.pix-box {
+  border: var(--pixel) solid var(--paper);
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    var(--shadow);
+  background: var(--ink-2);
+  border-radius: 2px;
+}
+.pix-box-inset {
+  border: 3px solid var(--ink);
+  background: var(--ink-3);
+  box-shadow: inset 0 4px 0 rgba(0,0,0,.5);
+  border-radius: 2px;
+}
+.pix-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  background: var(--yellow);
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: .5px;
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   TYPE
+============================================ */
+.t-pixel { font-family: var(--font-pixel); letter-spacing: 1px; line-height: 1.4; }
+.t-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.t-display { font-family: var(--font-display); font-weight: 800; }
+.t-zh { font-family: var(--font-zh); }
+
+.headline {
+  font-family: var(--font-pixel);
+  color: var(--yellow);
+  text-shadow:
+    3px 0 0 var(--red),
+    -3px 0 0 var(--cyan),
+    0 0 18px rgba(255, 210, 63, .5);
+  line-height: 1.15;
+  letter-spacing: 2px;
+}
+
+/* ============================================
+   BUTTONS
+============================================ */
+.btn-pixel {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 14px 20px;
+  background: var(--red);
+  color: var(--paper);
+  border: 3px solid var(--paper);
+  box-shadow:
+    inset 0 -4px 0 rgba(0,0,0,.35),
+    inset 0 4px 0 rgba(255,255,255,.18),
+    var(--shadow);
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: 2px;
+  transition: transform .08s, box-shadow .08s;
+  position: relative;
+}
+.btn-pixel:hover { transform: translateY(2px); box-shadow: inset 0 -4px 0 rgba(0,0,0,.35), inset 0 4px 0 rgba(255,255,255,.18), 0 6px 0 rgba(0,0,0,.9); }
+.btn-pixel:active { transform: translateY(6px); box-shadow: inset 0 -2px 0 rgba(0,0,0,.4), 0 2px 0 rgba(0,0,0,.9); }
+.btn-pixel.alt { background: var(--cyan); color: var(--ink); }
+.btn-pixel.ghost { background: var(--ink-2); color: var(--paper); }
+.btn-pixel.warn { background: var(--yellow); color: var(--ink); }
+
+/* ============================================
+   HP BAR (segmented, classic arcade)
+============================================ */
+.hp {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 4px;
+  background: var(--ink);
+  border: 3px solid var(--paper);
+  border-radius: 2px;
+  width: 100%;
+  height: 22px;
+  box-shadow: inset 0 0 0 1px var(--ink), 0 4px 0 rgba(0,0,0,.6);
+}
+.hp-seg {
+  flex: 1;
+  background: linear-gradient(180deg, #FF6080, var(--red) 50%, var(--red-deep));
+  border-right: 2px solid var(--ink);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.25);
+}
+.hp-seg:last-child { border-right: none; }
+.hp-seg.empty {
+  background: linear-gradient(180deg, var(--ink-3) 0%, var(--ink-2) 100%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.6);
+}
+.hp-seg.warn { background: linear-gradient(180deg, #FFE76A, var(--yellow) 50%, #B8861C); }
+.hp-seg.crit { background: linear-gradient(180deg, #FF8090, var(--red) 50%, var(--red-deep)); animation: hp-flash .35s steps(2) infinite; }
+@keyframes hp-flash { 50% { filter: brightness(1.3); } }
+
+/* timer bar */
+.timer-bar {
+  height: 10px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.timer-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--yellow) 60%, var(--red));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.3);
+}
+
+/* ============================================
+   GLOVES
+============================================ */
+.glove {
+  width: 96px; height: 96px;
+  background: var(--red);
+  border: 4px solid var(--ink);
+  border-radius: 50% 50% 35% 35%;
+  position: relative;
+  box-shadow:
+    inset -8px -8px 0 rgba(0,0,0,.18),
+    inset 8px 8px 0 rgba(255,255,255,.15),
+    var(--shadow);
+}
+.glove::before {
+  content: ""; position: absolute;
+  width: 30px; height: 36px;
+  border: 4px solid var(--ink);
+  border-bottom: none;
+  border-radius: 40% 60% 0 0;
+  top: -28px;
+  background: inherit;
+}
+.glove.left::before { right: 10px; }
+.glove.right::before { left: 10px; }
+.glove .cuff {
+  position: absolute;
+  bottom: -16px; left: 50%; transform: translateX(-50%);
+  width: 78px; height: 22px;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
+.glove .laces {
+  position: absolute; left: 50%; top: 28%;
+  transform: translateX(-50%);
+  width: 4px; height: 30px;
+  background: repeating-linear-gradient(0deg, var(--ink) 0 4px, transparent 4px 8px);
+}
+
+/* glove variants — set via .glove.v-X */
+.glove.v-classic { background: var(--red); }
+.glove.v-gold { background: linear-gradient(160deg, #FFE07A, var(--yellow), #B8861C); }
+.glove.v-cyber { background: linear-gradient(160deg, #1F3FE0, var(--cyan)); }
+.glove.v-leather { background: linear-gradient(160deg, #6E3A1F, #3D1F08); }
+.glove.v-toxic { background: linear-gradient(160deg, #5BFF8E, var(--green) 60%, #1FA040); }
+
+/* ============================================
+   PIXEL CHARACTER (CSS pixel art via box-shadow)
+   each character defined in JSX
+============================================ */
+.npc {
+  width: 160px; height: 200px;
+  position: relative;
+  filter: drop-shadow(0 8px 0 rgba(0,0,0,.5));
+}
+.npc.shake { animation: shake .35s; }
+.npc.hit { animation: hit-flash .2s; }
+.npc.ko { animation: ko-fall .9s ease-in forwards; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px) rotate(-4deg); }
+  60% { transform: translateX(8px) rotate(4deg); }
+}
+@keyframes hit-flash { 50% { filter: drop-shadow(0 8px 0 rgba(0,0,0,.5)) brightness(2.5) saturate(0); } }
+@keyframes ko-fall {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(-90deg) translate(-60px, 60px); opacity: 0; }
+}
+
+/* ============================================
+   POW! / BOOM! impact text
+============================================ */
+.impact {
+  font-family: var(--font-pixel);
+  font-size: 36px;
+  color: var(--yellow);
+  -webkit-text-stroke: 3px var(--ink);
+  text-shadow: 4px 4px 0 var(--red);
+  letter-spacing: 2px;
+  display: inline-block;
+}
+.impact.go { animation: impact-pop .55s ease-out forwards; }
+@keyframes impact-pop {
+  0% { opacity: 1; transform: scale(.4) rotate(-15deg); }
+  40% { transform: scale(1.3) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1) rotate(-3deg) translateY(-30px); }
+}
+
+/* KO BANNER */
+.ko-banner {
+  font-family: var(--font-pixel);
+  font-size: 84px;
+  color: var(--yellow);
+  -webkit-text-stroke: 5px var(--ink);
+  text-shadow: 0 0 28px rgba(255, 45, 92, .6), 6px 6px 0 var(--red);
+  letter-spacing: 8px;
+  line-height: 1;
+}
+
+/* ============================================
+   STAT / DATA CHIPS
+============================================ */
+.stat-card {
+  background: var(--ink-2);
+  border: 4px solid var(--paper);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  border-radius: 2px;
+  position: relative;
+}
+.stat-card::after {
+  content: "";
+  position: absolute; inset: -4px;
+  border: 1px dashed rgba(255,255,255,.06);
+  pointer-events: none;
+}
+.stat-num {
+  font-family: var(--font-pixel);
+  font-size: 36px;
+  line-height: 1;
+  color: var(--yellow);
+}
+.stat-label {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--paper);
+  opacity: .7;
+  margin-top: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* scanline + crt overlay (optional) */
+.crt::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 2px, transparent 2px 4px);
+  z-index: 50;
+}
+
+/* utility */
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.center { display: flex; align-items: center; justify-content: center; }
+.gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; } .gap-6 { gap: 24px; } .gap-8 { gap: 32px; }
